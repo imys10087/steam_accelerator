@@ -1,4 +1,4 @@
-#if MONO_MAC
+﻿#if MONO_MAC
 using MonoMac.AppKit;
 using MonoMac.Foundation;
 #elif XAMARIN_MAC
@@ -106,32 +106,30 @@ namespace System.Application.Services.Implementation
                     Environment.UserName);
             return value;
         }
+        /// <summary>
+        /// 切换 Steam 当前登录用户。
+        ///
+        /// <para><b>裁剪说明</b></para>
+        /// <para>
+        /// 原实现会读取 Steam 的 <c>registry.vdf</c>（依赖 <c>VdfHelper</c>）并改写其中的
+        /// <c>AutoLoginUser</c>。该能力属于「Steam 账号切换」，已随账号模块一并移除，
+        /// <c>VdfHelper</c> 也已删除。为保持接口契约这里保留方法签名，实现改为 no-op。
+        /// </para>
+        /// </summary>
+        /// <summary>
+        /// 切换 Steam 当前登录用户。
+        ///
+        /// <para><b>裁剪说明</b></para>
+        /// <para>
+        /// 原实现会读取 Steam 的 <c>registry.vdf</c>（依赖 <c>VdfHelper</c>）并改写其中的
+        /// <c>AutoLoginUser</c>。该能力属于「Steam 账号切换」，已随账号模块一并移除，
+        /// <c>VdfHelper</c> 也已删除。为保持接口契约这里保留方法签名，实现改为 no-op。
+        /// </para>
+        /// </summary>
         public void SetCurrentUser(string userName)
         {
-            try
-            {
-                var registryVdfPath = GetRegistryVdfPath();
-                if (!string.IsNullOrWhiteSpace(registryVdfPath) && File.Exists(registryVdfPath))
-                {
-                    dynamic v = VdfHelper.Read(registryVdfPath);
-                    var autoLoginUser = v.Value.HKCU.Software.Valve.Steam.AutoLoginUser;
-                    if (autoLoginUser != null)
-                    {
-                        var oldStr = $"\t\t\t\t\t\"AutoLoginUser\"\t\t\"{autoLoginUser}\"\n";
-                        var newStr = $"\t\t\t\t\t\"AutoLoginUser\"\t\t\"{userName}\"\n";
-                        VdfHelper.UpdateValueByReplaceNoPattern(registryVdfPath, oldStr, newStr);
-                    }
-                    else
-                    {
-                        Log.Error("SetCurrentUser", "UpdateAuthorizedAutoLoginUser Fail(0). AutoLoginUser IsNull");
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                Log.Error("SetCurrentUser", e, "UpdateAuthorizedAutoLoginUser Fail(0).");
-            }
-
+            // Steam 账号切换功能已移除，无操作。
+            _ = userName;
         }
 
         #region MachineKey

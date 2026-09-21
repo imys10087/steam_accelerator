@@ -1,7 +1,11 @@
 <Project Sdk="MSBuild.Sdk.Extras">
 
   <PropertyGroup>
-    <TargetFrameworks>MonoAndroid11.0;netstandard2.1</TargetFrameworks>
+    <!-- 原为 MonoAndroid11.0;netstandard2.1。本次精简目标为「仅桌面端」，
+         移除了 MonoAndroid 目标框架：构建它需要 Android 工作负载，
+         而桌面端只用到 netstandard2.1 这一支。
+         下文中 Condition 判断 MonoAndroid 的 ItemGroup 因此全部失效（保留不影响）。 -->
+    <TargetFrameworks>netstandard2.1</TargetFrameworks>
     <RootNamespace>System</RootNamespace>
     <AssemblyName>System.Common.PinyinLib.TinyPinyin</AssemblyName>
   </PropertyGroup>

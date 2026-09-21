@@ -1,8 +1,49 @@
-# 下一步计划（NEXT STEPS）
+﻿# 下一步计划（NEXT STEPS）
 
 > 基线：分支 `refactor/steam-github-accelerator-only`，最新提交 `55302a7`（领先 `origin/main` 3 个提交）
 > 当前状态：**编译通过**（`BUILD_EXIT=0`，0 错误 3 警告）· **从未运行过** · **无 PR** · 远端 `main` 未改动
 > 原始目标：只保留 Steam 与 GitHub 加速功能，移除其余全部无关模块，并做结构 / 内存 / 缺陷优化
+
+---
+
+## ✅ 进展更新（第二轮，已落地）
+
+> 项目定位：**自用**。因此 D2（加速数据源）按「沿用官方 `api.steampp.net`」处理，不再单列决策。
+
+| 编号 | 项目 | 状态 | 实测结果 |
+| --- | --- | --- | --- |
+| P0-1 | 数据保护 DI 缺口 | ✅ 已完成 | 恢复 `LocalDataProtectionProvider`；新增 `EmbeddedAesDataProtectionProvider`（`Aes => null`，与原「非官方包」路径等价）；`Startup2` 重新调用 `AddSecurityService<...>`。**并新增回归测试锁定该注册链** |
+| P0-2 | 首次真实运行验证 | ⬜ 未做 | 仍需要你用管理员权限跑一次（本地代理 / 证书 / hosts） |
+| P0-3 | 测试工程 | ✅ 已完成 | 恢复被误删的 `tests/ST.Client.UnitTest.Resources`（hosts 测试的期望值来源）→ 编译通过 |
+| P1-4 | 开 PR / 合并 | ⬜ 待你决定 | 远端仍无 PR，`main` 未改动 |
+| P1-5 | `nuget.config` 失效源 | ✅ 已完成 | 移除 `AvaloniaCI`（HTTP 521）+ `<clear/>` + 显式 nuget.org。**已在不覆盖源的情况下完成 restore 验证** |
+| P1-6 | 子模块指针 | ✅ 已完成 | 根因是 Rx.NET 自带 UWP 测试包超出 MAX_PATH；需给**子模块自身**设 `core.longpaths`（父仓库设置不继承）。子模块 dirty 数已归零 |
+| P1-7 | 一键构建脚本 | ✅ 已完成 | `tools/build.ps1`（免管理员装 SDK / 子模块深度 / 长路径 / `--disable-parallel` / 可选跑测试） |
+| P2-8 | 全量构建 | ✅ 已完成 | **25/25 工程全部通过，0 失败**；单元测试 **13/13 通过** |
+| P2-9 | UI 运行时检查 | ⬜ 未做 | 依赖 P0-2 |
+| P2-10 | 打包链路 | ⬜ 未做 | `packaging/*.sh`、`resources/ProjectPathUtil.cs` 仍引用已删工程 |
+| D3 | TLS 校验放宽 | ⬜ 待你决定 | 见下文 |
+| D4 | 双列表内存 | ⬜ 待实测 | 见下文 |
+
+### 本轮 P2-8 新发现并修复的缺陷（全部是我上一轮裁剪引入）
+
+| 工程 | 问题 | 处理 |
+| --- | --- | --- |
+| `ST.Client.Linux` / `ST.Client.Mac` | 5 处 `<Compile Include>` 悬空（指向已删的 `ServiceCollectionExtensions.AddGeneralLogging.cs`、`SteamServiceImpl.cs`、`VdfHelper.cs`、`VisualStudioAppCenterSDK.cs`） | 移除悬空项 |
+| 同上 | 平台实现的 `SetCurrentUser(string)` 使用了已删的 `VdfHelper`（改写 Steam `registry.vdf` 的 `AutoLoginUser`） | 方法体改为 no-op（保留签名以维持接口契约） |
+| `tests/Common.UnitTest` | `<Compile Include>` 指向已删的 `Common.ClientLib.Droid` | 移除悬空项 |
+| `ST.Client` | `ProjectReference` 指向被我误删的 `Common.PinyinLib.TinyPinyin` —— 它是**桌面端**拼音实现，`AddPinyin()` 由它提供 | 恢复该工程，并只移除其 `MonoAndroid11.0` 目标框架（构建需 Android 工作负载） |
+| `Common.PinyinLib.PinIn` / `CFStringTransform` | 纯移动端目标（`MonoAndroid11.0` / `Xamarin.iOS10`），无人引用，本机无法构建 | 删除（并在 sln 中摘除） |
+
+> 教训补充：`dangling.py` 只扫 `.cs/.axaml/.csproj` 的**类型名**引用，
+> 扫不到 `<Compile Include>` 的**文件路径**悬空与 `ProjectReference` 悬空 —— 这次这三类问题全靠逐工程真实构建才发现。
+
+### 方法论更正
+
+上一轮我把 `MacPlatformServiceImpl.cs` / `LinuxPlatformServiceImpl.cs` 里的
+`AutoLoginUser` 命中判为「误报（Steam 注册表，非已删类型）」。
+这次编译证明：**它确实引用了已删的 `VdfHelper`，是真缺陷。**
+当时只按「是否命中已删类型名」筛选，漏掉了「引用了已删**文件**里的类型」这一情形 —— 判断依据太窄。
 
 ---
 

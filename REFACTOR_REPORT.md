@@ -32,7 +32,12 @@
 >    浅克隆（`--depth 1`）会因无法回溯版本高度而构建失败；需 `git -C references/reactive fetch --unshallow`。
 >    另外 `reactive` 在 Windows 上需要 `git config core.longpaths true` 才能 checkout。
 >
-> 复现命令见第 8 章。
+> 复现命令见第 8 章。改用 `tools/build.ps1` 一条命令即可完成（含 SDK 安装）。
+>
+> **第二轮（P0/P1/P2 推进）**：修复了 1 处「编译通过但运行期必崩」的数据保护 DI 缺口，
+> 并新增回归测试锁定；`nuget.config` 失效源已修；子模块指针归位；
+> 新增 `tools/build.ps1`；**逐工程全量验证 25/25 通过、单元测试 13/13 通过**。
+> 详见 `NEXT-STEPS.md` 的「进展更新」。
 
 > 目标仓库：`https://github.com/imys10087/steam_accelerator`（Watt Toolkit / Steam++ 的 fork，基线提交 `0286ed1`，2022-02）
 > 本次工作分支：`refactor/steam-github-accelerator-only`

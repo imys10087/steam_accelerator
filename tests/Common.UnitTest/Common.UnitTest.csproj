@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
@@ -20,9 +20,6 @@
     </Compile>
     <Compile Include="..\..\src\TargetFramework.cs">
       <Link>Utils\TargetFramework.cs</Link>
-    </Compile>
-    <Compile Include="..\..\src\Common.ClientLib.Droid\Logging\LogHelper.cs">
-      <Link>Utils\LogHelper.cs</Link>
     </Compile>
   </ItemGroup>
 

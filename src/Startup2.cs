@@ -75,6 +75,15 @@ namespace System.Application
 
             // 键值对存储（SerializableProperty 的持久化基础）
             services.TryAddSecureStorage();
+
+            // 数据保护注册链 —— 必须保留。
+            // 它注册了 ILocalDataProtectionProvider（由 LocalDataProtectionProvider 实现，
+            // 基于 DPAPI + 机器密钥），以及 IProtectedData / IDataProtectionProvider 的兜底实现
+            // 和 ISecurityService。缺了它，SecureStorage / 设置持久化会在运行期解析失败
+            // （这类问题编译期无法发现）。
+            // 内嵌 AES 提供程序在本分支恒返回 null（无内嵌密钥），基类会安全降级为透传。
+            services.AddSecurityService<EmbeddedAesDataProtectionProvider, LocalDataProtectionProvider>();
+
             services.AddPreferences();
         }
 
