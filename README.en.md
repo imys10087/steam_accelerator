@@ -1,263 +1,145 @@
-<h1 align="center">Steam++ Tools 🧰</h1>
-
 <div align="center">
 
-English | [简体中文](./README.md)
+# Steam / GitHub Accelerator (Personal Trimmed Build)
 
-「Steam++」is a toolkit that contains a variety of Steam tools, most of which require you to download and install Steam in order to use them.
+**A Steam++ fork that keeps only network acceleration** · Personal use · Windows-first
 
-![Release Download](https://img.shields.io/github/downloads/rmbadmin/SteamTools/total?style=flat-square)
-[![Release Version](https://img.shields.io/github/v/release/rmbadmin/SteamTools?style=flat-square)](https://github.com/rmbadmin/SteamTools/releases/latest)
-[![GitHub license](https://img.shields.io/github/license/rmbadmin/SteamTools?style=flat-square)](LICENSE)
-[![GitHub Star](https://img.shields.io/github/stars/rmbadmin/SteamTools?style=flat-square)](https://github.com/rmbadmin/SteamTools/stargazers)
-[![GitHub Fork](https://img.shields.io/github/forks/rmbadmin/SteamTools?style=flat-square)](https://github.com/rmbadmin/SteamTools/network/members)
-![GitHub Repo size](https://img.shields.io/github/repo-size/rmbadmin/SteamTools?style=flat-square&color=3cb371)
-[![GitHub Repo Languages](https://img.shields.io/github/languages/top/BeyondDimension/SteamTools?style=flat-square)](https://github.com/BeyondDimension/SteamTools/search?l=c%23)
-[![NET 6.0](https://img.shields.io/badge/dotnet-6.0-purple.svg?style=flat-square&color=512bd4)](https://docs.microsoft.com/en-us/dotnet/core/whats-new/dotnet-6)
-[![C# 10.0](https://img.shields.io/badge/c%23-10.0-green.svg?style=flat-square&color=6da86a)](https://docs.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-10)
-
-[![Desktop UI](https://img.shields.io/badge/ui@desktop-AvaloniaUI-purple.svg?style=flat-square&color=8c45ab)](https://github.com/AvaloniaUI/Avalonia)
-[![Mobile GUI](https://img.shields.io/badge/gui@mobile-Xamarin.Forms-blue.svg?style=flat-square&color=3498db)](https://github.com/xamarin/Xamarin.Forms)
-[![Official WebSite](https://img.shields.io/badge/website@official-Ant%20Design%20of%20React-blue.svg?style=flat-square&color=61dafb)](https://github.com/ant-design/ant-design)
-[![BackManage WebSite](https://img.shields.io/badge/website@back_manage-Ant%20Design%20of%20Blazor-purple.svg?style=flat-square&color=512bd4)](https://github.com/ant-design-blazor/ant-design-blazor)
-
-[![Build Status](https://img.shields.io/endpoint.svg?url=https%3A%2F%2Factions-badge.atrox.dev%2FSteamTools-Team%2FSteamTools%2Fbadge%3Fref%3Ddevelop&style=flat-square)](https://actions-badge.atrox.dev/BeyondDimension/SteamTools/goto?ref=develop)
-[![GitHub Star](https://img.shields.io/github/stars/rmbadmin/SteamTools.svg?style=social)](https://github.com/BeyondDimension/SteamTools)
-[![Gitee Star](https://gitee.com/rmbgame/SteamTools/badge/star.svg)](https://gitee.com/rmbgame/SteamTools)
 </div>
 
-<div align="center"><img src="./resources/screenshots.en.jpg" /></div>
+---
 
-## 🚀 Download channel
-- [GitHub Releases](https://github.com/BeyondDimension/SteamTools/releases)
-- [Gitee Releases](https://gitee.com/rmbgame/SteamTools/releases)
-- [Official WebSite](https://steampp.net)
-- [![Microsoft Store](./resources/MSStore_English.png)](https://www.microsoft.com/store/apps/9MTCFHS560NG)
-- [Arch Linux Package](https://aur.archlinux.org/packages/steam%2B%2B-bin)(By [zhanghua000](https://github.com/zhanghua000))
+## What this is
 
-## ✨ Functions
-1. Local reverse proxy for Steam's community webpage to enable normal access in **the Chinese Mainland, Mainland of China**
-2. Quickly switch the Steam account that the current PC has remembered to log into
-	- This feature is to read the local user login records stored under the Steam path to directly display the operation, you can switch between multiple accounts without re-entering passwords and tokens.
-3. Achievement stat modifications for Steam games
-	- Function reference SteamAchievementManager for secondary development, modified the game list loading and operation ease of use. 
-4. Steam Local Two-Step Authenticator
-    - The function reference [WinAuth](https://github.com/winauth/winauth) is developed to enable you to view your token without launching the mobile version of Steam App, similar function software are [WinAuth](https://github.com/winauth/winauth), [SteamDesktopAuthenticator](https://github.com/Jessecar96/SteamDesktopAuthenticator).
-5. Some game tools
-	- Currently there is a forced game borderless windowing.
+This repository is a **fork** of [BeyondDimension/SteamTools](https://github.com/BeyondDimension/SteamTools)
+(Steam++ / Watt Toolkit), heavily trimmed to keep **only Steam and GitHub network acceleration**.
+Everything else has been removed.
 
-<!--Prerequisites Microsoft Visual C++ 2015-2019 Redistributable [64 bit](https://aka.ms/vs/16/release/vc_redist.x64.exe) / [32 bit](https://aka.ms/vs/16/release/vc_redist.x86.exe)-->
-## 🖥 Supported Operating Systems
-### Windows
+Upstream is a full "Steam toolbox": account management, Steam Guard tokens, achievement unlocking,
+ASF card farming, game utilities, multi-platform proxying and more. None of that is needed here —
+the goal is a small, maintainable tool that accelerates Steam and GitHub and nothing else.
 
-OS                                    | Version                 | Architectures   | Lifecycle
---------------------------------------|-------------------------|-----------------|----------
-[Windows Client][Windows-client]      | 7 SP1(**\***), 8.1      | x64        | [Windows][Windows-lifecycle]
-[Windows 10 Client][Windows-client]   | Version 1607+(**\***)   | x64        | [Windows][Windows-lifecycle]
-[Windows Server][Windows-Server]      | 2012+                   | x64        | [Windows Server][Windows-Server-lifecycle]
+> See **[REFACTOR_REPORT.md](./REFACTOR_REPORT.md)** for the full architecture analysis, removal scope,
+> optimization work and defect list; see **[NEXT-STEPS.md](./NEXT-STEPS.md)** for current status and pending tasks.
 
-**\*** Windows 7 SP1 is supported with [Extended Security Updates](https://docs.microsoft.com/troubleshoot/windows-client/windows-7-eos-faq/windows-7-extended-security-updates-faq) installed.  
-**\*** Microsoft Store/Desktop Bridge Version 1809+
+## ✨ Retained features
 
-[Windows-client]: https://www.microsoft.com/windows/
-[Windows-lifecycle]: https://support.microsoft.com/help/13853/windows-lifecycle-fact-sheet
-[win-client-docker]: https://hub.docker.com/_/microsoft-windows
-[Windows-Server-lifecycle]: https://docs.microsoft.com/windows-server/get-started/windows-server-release-info
-[Nano-Server]: https://docs.microsoft.com/windows-server/get-started/getting-started-with-nano-server
-[Windows-Server]: https://docs.microsoft.com/windows-server/
+| Feature | Description |
+| --- | --- |
+| **Accelerate project toggles** | Fetches the project list from the server (Steam, GitHub, …) and enables the ones you select |
+| **Local reverse proxy** | Built on [Titanium.Web.Proxy](https://github.com/justcoding121/titanium-web-proxy); matches by domain, then rewrites upstream IP / port / TLS SNI |
+| **System proxy mode** | Writes the system proxy settings so browsers and the Steam client are covered globally |
+| **Transparent proxy mode (hosts)** | Leaves the system proxy alone and instead points accelerated domains at `127.0.0.1` via hosts |
+| **User script injection** | Fetch scripts from the script store or import local JS files; injected into proxied pages |
+| **Upstream (second-level) proxy** | Optionally chains accelerated traffic through another HTTP proxy |
+| **Upstream DNS selection** | Presets for AliDNS / 114 / DNSPod / Baidu / Google / Cloudflare |
+| **Root certificate management** | Creates, installs and checks the local root certificate used for HTTPS decryption |
 
-### Linux
+## ❌ Removed compared to upstream
 
-OS                                    | Version               | Architectures     | Lifecycle
---------------------------------------|-----------------------|-------------------|----------
-[Alpine Linux][Alpine]                | 3.13+                 | x64, Arm64        | [Alpine][Alpine-lifecycle]
-[CentOS][CentOS]                      | 7+                    | x64               | [CentOS][CentOS-lifecycle]
-[Debian][Debian]                      | 10+                   | x64, Arm64        | [Debian][Debian-lifecycle]
-[Fedora][Fedora]                      | 33+                   | x64               | [Fedora][Fedora-lifecycle]
-[openSUSE][OpenSUSE]                  | 15+                   | x64               | [OpenSUSE][OpenSUSE-lifecycle]
-[Red Hat Enterprise Linux][RHEL]      | 7+                    | x64, Arm64        | [Red Hat][RHEL-lifecycle]
-[SUSE Enterprise Linux (SLES)][SLES]  | 12 SP2+               | x64               | [SUSE][SLES-lifecycle]
-[Ubuntu][Ubuntu]                      | 16.04, 18.04, 20.04+  | x64, Arm64        | [Ubuntu][Ubuntu-lifecycle]
-[Deepin / UOS][Deepin]                | 20+                   | x64               | [Deepin][Deepin-lifecycle]
-[Arch Linux][Arch]                    |                       | x64               | 
+Accounts and SMS verification, Steam Guard tokens, achievement unlocking and management,
+ArchiSteamFarm card farming, game utilities (borderless windowing / idling), GOG and other
+platform proxying, announcements and notifications, app updates, donation ranking,
+mobile (Android / iOS / Xamarin.Forms), the server-side and SMS services, all build-tool projects,
+and upstream's legacy V1 codebase (`source/`).
 
-[Alpine]: https://alpinelinux.org/
-[Alpine-lifecycle]: https://wiki.alpinelinux.org/wiki/Alpine_Linux:Releases
-[CentOS]: https://www.centos.org/
-[CentOS-lifecycle]:https://wiki.centos.org/FAQ/General
-[CentOS-docker]: https://hub.docker.com/_/centos
-[CentOS-pm]: https://docs.microsoft.com/dotnet/core/install/linux-package-manager-centos8
-[Debian]: https://www.debian.org/
-[Debian-lifecycle]: https://wiki.debian.org/DebianReleases
-[Debian-pm]: https://docs.microsoft.com/dotnet/core/install/linux-package-manager-debian10
-[Fedora]: https://getfedora.org/
-[Fedora-lifecycle]: https://fedoraproject.org/wiki/End_of_life
-[Fedora-docker]: https://hub.docker.com/_/fedora
-[Fedora-msft-pm]: https://docs.microsoft.com/dotnet/core/install/linux-package-manager-fedora32
-[Fedora-pm]: https://fedoraproject.org/wiki/DotNet
-[OpenSUSE]: https://opensuse.org/
-[OpenSUSE-lifecycle]: https://en.opensuse.org/Lifetime
-[OpenSUSE-docker]: https://hub.docker.com/r/opensuse/leap
-[OpenSUSE-pm]: https://docs.microsoft.com/dotnet/core/install/linux-package-manager-opensuse15
-[RHEL]: https://www.redhat.com/en/technologies/linux-platforms/enterprise-linux
-[RHEL-lifecycle]: https://access.redhat.com/support/policy/updates/errata/
-[RHEL-msft-pm]: https://docs.microsoft.com/dotnet/core/install/linux-package-manager-rhel8
-[RHEL-pm]: https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8/html/developing_.net_applications_in_rhel_8/using-net-core-on-rhel_gsg#installing-net-core_gsg
-[SLES]: https://www.suse.com/products/server/
-[SLES-lifecycle]: https://www.suse.com/lifecycle/
-[SLES-pm]: https://docs.microsoft.com/dotnet/core/install/linux-package-manager-sles15
-[Ubuntu]: https://ubuntu.com/
-[Ubuntu-lifecycle]: https://wiki.ubuntu.com/Releases
-[Ubuntu-pm]: https://docs.microsoft.com/dotnet/core/install/linux-package-manager-ubuntu-2004
-[Deepin]: https://www.deepin.org/
-[Deepin-lifecycle]: https://www.deepin.org/release-notes
-[Arch]: https://archlinux.org/
+Project count went from **58 → 22**, C# files under `src` from **1203 → ~570**,
+and git submodules from **13 → 5**.
 
-### macOS
+## 🖥 Requirements
 
-OS                            | Version                   | Architectures     |
-------------------------------|---------------------------|-------------------|
-[macOS][macOS]                | 10.14+                    | x64               |
+- **Windows 10 / 11** (primary target, best verified)
+- The Linux / macOS projects are kept and compile, but have **not been runtime-verified**
 
-[macOS]: https://support.apple.com/macos
+## ⌨️ Building
 
-### Android
+Requires **.NET SDK 6.0.101** (pinned by `global.json`). A one-command, admin-free script is provided:
 
-OS                            | Version                 | Architectures                                                      |
-------------------------------|-------------------------|--------------------------------------------------------------------|
-[Android][Android]            | 5.0(API 21)+            | [x64][Android-x64], [Arm64][Android-Arm64], [Arm32][Android-Arm32] |
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\build.ps1
 
-[Android]: https://support.google.com/android
-[Android-x64]: https://developer.android.google.cn/ndk/guides/abis?hl=zh_cn#86-64
-[Android-Arm32]: https://developer.android.google.cn/ndk/guides/abis?hl=zh_cn#v7a
-[Android-Arm64]: https://developer.android.google.cn/ndk/guides/abis?hl=zh_cn#arm64-v8a
+# Release build plus unit tests
+powershell -ExecutionPolicy Bypass -File tools\build.ps1 -Configuration Release -Test
+```
 
-### ~~iOS / iPadOS~~
+The script handles three non-obvious prerequisites that otherwise break the build with
+misleading errors:
 
-OS                            | Version                 | Architectures     |
-------------------------------|-------------------------|-------------------|
-[iOS][iOS]                    | 10.0+                   | x64, Arm64, Arm32 |
+1. If SDK 6.0.101 is missing, it downloads and extracts it into your user directory
+   (**no registry writes, no PATH changes, no admin rights**);
+2. It initialises submodules and fetches the **full git history** for `references/reactive` (Rx.NET) —
+   it uses Nerdbank.GitVersioning, and a shallow clone breaks the build. It also enables
+   `core.longpaths` for that submodule (it contains a path exceeding the Windows MAX_PATH limit);
+3. NuGet restore runs with `--disable-parallel` to avoid an intermittent
+   `Access to the path ... is denied` race.
 
-[iOS]: https://support.apple.com/ios
+Equivalent manual commands:
 
-## ⛔ Unsupported Operating System
-- Windows 8
-	- [Due to Microsoft's official support for the product has ended](https://docs.microsoft.com/lifecycle/products/windows-8), so this program cannot run on this operating system, [It is recommended to upgrade to Windows 8.1](https://support.microsoft.com/windows/update-to-windows-8-1-from-windows-8-17fc54a7-a465-6b5a-c1a0-34140afd0669)
-- Windows Server 2008 R2 SP1
-	- Only version 1.x is available, 2.x is not supported at first, and it is recommended to upgrade to a higher version
-- Windows Server / Linux version without desktop GUI
-- Xbox or Windows Mobile / Phone
+```bash
+git submodule update --init --recursive
+dotnet restore src/ST.Client.Desktop.Avalonia.App/ST.Client.Avalonia.App.csproj --disable-parallel
+dotnet build   src/ST.Client.Desktop.Avalonia.App/ST.Client.Avalonia.App.csproj -c Debug --no-restore
+```
 
-## 🌏 Roadmap
-Read what we [milestones](https://github.com/BeyondDimension/SteamTools/milestones), and feel free to ask questions.
+> **Note**: the original `AvaloniaCI` feed in `nuget.config` (`nuget.avaloniaui.net`) is dead
+> (HTTP 521) and made restore fail outright. It has been removed in favour of nuget.org.
 
-## ⌨️ Development Environment
-[Visual Studio 2022](https://visualstudio.microsoft.com/vs/)  
-[JetBrains Rider](https://www.jetbrains.com/rider/)  
-~~[Visual Studio 2022 for Mac Preview](https://visualstudio.microsoft.com/zh-hans/vs/mac/preview/)~~  
-~~[Visual Studio Code](https://code.visualstudio.com/)~~
-- Supported Operating Systems
-	- [Windows 10 Version 2004 Or Higher: Home, Professional, Education, and Enterprise (LTSC and S are not supported)](https://docs.microsoft.com/en-us/visualstudio/releases/2019/system-requirements)
-	- [macOS 10.14 Mojave Or Higher](https://docs.microsoft.com/en-us/visualstudio/productinfo/vs2019-system-requirements-mac)
-- Workload
-	- Web and Cloud
-		- ASP.NET and Web Development
-	- Desktop and Mobile Applications
-		- .NET Desktop Development
-		- UWP Development
-		- Mobile Development using .Net
-	- Other Toolsets
-		- .NET Core Cross Platform Development
-- Single Component
-	- GitHub Extension for Visual Studio
-	- Windows 10 SDK (10.0.19041.0)
-- [Visual Studio Marketplace](https://marketplace.visualstudio.com/)
-	- [Avalonia for Visual Studio](https://marketplace.visualstudio.com/items?itemName=AvaloniaTeam.AvaloniaforVisualStudio)
-	- [NUnit VS Templates](https://marketplace.visualstudio.com/items?itemName=NUnitDevelopers.NUnitTemplatesforVisualStudio)
+## ▶️ Running
 
-[OpenJDK 11](https://docs.microsoft.com/java/openjdk/download#openjdk-11)  
-[Android Studio 2021.1.1 Or Higher](https://developer.android.com/studio/)  
-[Xcode 13 Or Higher](https://developer.apple.com/xcode/)
+**Administrator rights are required** for:
 
-## 📄 Thanks to the following Open Source Projects
-* [Newtonsoft.Json](https://github.com/JamesNK/Newtonsoft.Json)
-* [MetroRadiance](https://github.com/Grabacr07/MetroRadiance)
-* [MetroTrilithon](https://github.com/Grabacr07/MetroTrilithon)
-* [Livet](https://github.com/runceel/Livet)
-* [StatefulModel](https://github.com/ugaya40/StatefulModel)
-* [Hardcodet.NotifyIcon](https://github.com/HavenDV/Hardcodet.NotifyIcon.Wpf.NetCore)
-* [System.Reactive](https://github.com/dotnet/reactive)
-* [Titanium-Web-Proxy](https://github.com/justcoding121/Titanium-Web-Proxy)
-* [Portable.BouncyCastle](https://github.com/novotnyllc/bc-csharp)
-* [Ninject](https://github.com/ninject/Ninject)
-* [log4net](https://github.com/apache/logging-log4net)
-* [SteamAchievementManager](https://github.com/gibbed/SteamAchievementManager)
-* [ArchiSteamFarm](https://github.com/JustArchiNET/ArchiSteamFarm)
-* [Steam4NET](https://github.com/SteamRE/Steam4NET)
-* [WinAuth](https://github.com/winauth/winauth)
-* [SteamDesktopAuthenticator](https://github.com/Jessecar96/SteamDesktopAuthenticator)
-* [Gameloop.Vdf](https://github.com/shravan2x/Gameloop.Vdf)
-* [DnsClient.NET](https://github.com/MichaCo/DnsClient.NET)
-* [Costura.Fody](https://github.com/Fody/Costura)
-* [MessagePack-CSharp](https://github.com/neuecc/MessagePack-CSharp)
-* [CSharpVitamins.ShortGuid](https://github.com/AigioL/CSharpVitamins.ShortGuid)
-* [Nito.Comparers](https://github.com/StephenCleary/Comparers)
-* [Nito.Disposables](https://github.com/StephenCleary/Disposables)
-* [Crc32.NET](https://github.com/force-net/Crc32.NET)
-* [gfoidl.Base64](https://github.com/gfoidl/Base64)
-* [sqlite-net-pcl](https://github.com/praeclarum/sqlite-net)
-* [AutoMapper](https://github.com/AutoMapper/AutoMapper)
-* [Polly](https://github.com/App-vNext/Polly)
-* [TaskScheduler](https://github.com/dahall/taskscheduler)
-* [SharpZipLib](https://github.com/icsharpcode/SharpZipLib)
-* [SevenZipSharp](https://github.com/squid-box/SevenZipSharp)
-* [ZstdNet](https://github.com/skbkontur/ZstdNet)
-* [Depressurizer](https://github.com/Depressurizer/Depressurizer)
-* [NLog](https://github.com/nlog/NLog)
-* [NUnit](https://github.com/nunit/nunit)
-* [ReactiveUI](https://github.com/reactiveui/reactiveui)
-* [MessageBox.Avalonia](https://github.com/AvaloniaUtils/MessageBox.Avalonia)
-* [AvaloniaUI](https://github.com/AvaloniaUI/Avalonia)
-* [AvaloniaGif](https://github.com/jmacato/AvaloniaGif)
-* [Avalonia XAML Behaviors](https://github.com/wieslawsoltes/AvaloniaBehaviors)
-* [FluentAvalonia](https://github.com/amwx/FluentAvalonia)
-* [APNG.NET](https://github.com/jz5/APNG.NET)
-* [Moq](https://github.com/moq/moq4)
-* [NPOI](https://github.com/nissl-lab/npoi)
-* [Fleck](https://github.com/statianzo/Fleck)
-* [Swashbuckle.AspNetCore](https://github.com/domaindrivendev/Swashbuckle.AspNetCore)
-* [AspNet.Security.OpenId.Providers](https://github.com/aspnet-contrib/AspNet.Security.OpenId.Providers)
-* [AspNet.Security.OAuth.Providers](https://github.com/aspnet-contrib/AspNet.Security.OAuth.Providers)
-* [ZXing.Net](https://github.com/micjahn/ZXing.Net)
-* [QRCoder](https://github.com/codebude/QRCoder)
-* [QR Code Generator for .NET](https://github.com/manuelbl/QrCodeGenerator)
-* [TinyPinyin](https://github.com/promeG/TinyPinyin)
-* [TinyPinyin.Net](https://github.com/hueifeng/TinyPinyin.Net)
-* [Packaging utilities for .NET Core](https://github.com/qmfrederik/dotnet-packaging)
-* [React](https://github.com/facebook/react)
-* [Ant Design](https://github.com/ant-design/ant-design)
-* [Ant Design Blazor](https://github.com/ant-design-blazor/ant-design-blazor)
-* [Toast messages for Xamarin.iOS](https://github.com/andrius-k/Toast)
-* [ImageCirclePlugin](https://github.com/jamesmontemagno/ImageCirclePlugin)
-* [Visual Studio App Center SDK for .NET](https://github.com/microsoft/appcenter-sdk-dotnet)
-* [AppCenter-XMac](https://github.com/nor0x/AppCenter-XMac)
-* [MSBuild.Sdk.Extras](https://github.com/novotnyllc/MSBuildSdkExtras)
-* [Xamarin.Essentials](https://github.com/xamarin/essentials)
-* [Xamarin.Forms](https://github.com/xamarin/Xamarin.Forms)
-* [Open Source Components for Xamarin](https://github.com/xamarin/XamarinComponents)
-* [Google Play Services / Firebase / ML Kit for Xamarin.Android](https://github.com/xamarin/GooglePlayServicesComponents)
-* [Picasso](https://github.com/square/picasso)
-* [OkHttp](https://github.com/square/okhttp)
-* [Material Components for Android](https://github.com/material-components/material-components-android)
-* [AndroidX for Xamarin.Android](https://github.com/xamarin/AndroidX)
-* [Android Jetpack](https://github.com/androidx/androidx)
-* [ConstraintLayout](https://github.com/androidx/constraintlayout)
-* [Entity Framework Core](https://github.com/dotnet/efcore)
-* [ASP.NET Core](https://github.com/dotnet/aspnetcore)
-* [Windows Forms](https://github.com/dotnet/winforms)
-* [Windows Presentation Foundation (WPF)](https://github.com/dotnet/wpf)
-* [C#/WinRT](https://github.com/microsoft/CsWinRT)
-* [command-line-api](https://github.com/dotnet/command-line-api)
-* [.NET Runtime](https://github.com/dotnet/runtime)
-* [Fluent UI System Icons](https://github.com/microsoft/fluentui-system-icons)
-* [Material design icons](https://github.com/google/material-design-icons)
+- Binding ports **443 / 80** (transparent mode; on Windows a busy port 80 is skipped gracefully)
+- Writing the **hosts** file (transparent proxy mode)
+- Installing the **root certificate** into the system trust store (HTTPS decryption)
+
+## 🌐 Where acceleration data comes from
+
+The accelerate project list comes from anonymous server endpoints (default `https://api.steampp.net`):
+
+```
+api/Accelerate/All           accelerate project groups (domains, upstream port, SNI, proxy type…)
+api/script/basics            built-in script
+api/script/table/*           script store
+api/script/updates           script updates
+api/version/checkupdate3/*   version policy
+```
+
+These are **anonymous endpoints — no login required**. The base URL is set in
+`SetApiBaseUrl` inside `src/Startup2.cs`; change that single place to point at your own backend.
+
+> This project no longer needs any embedded keys (`aes-key.pfx` / `rsa-public-key.pfx`).
+> Upstream used them to encrypt account-API traffic; they were removed along with the account module.
+
+## 🔧 Known limitations
+
+- **Not runtime-verified yet**: the code compiles cleanly (25/25 projects, 13/13 unit tests)
+  but a **full acceleration run has not been exercised in a real environment**
+  (proxy / certificate / hosts). See P0-2 in NEXT-STEPS.
+- **Upstream TLS validation is relaxed**: `OnCertificateValidation` sets `e.IsValid = true`.
+  This is an **upstream trade-off** (to support self-hosted / mirror nodes) and was **not changed** here.
+  If you only use official nodes, consider tightening it to an error-type allowlist.
+- **Packaging is incomplete**: scripts depending on the removed tool projects have been cleaned up and
+  `build.ps1` retains publish support; upstream's Store / UWP packaging flow is not kept.
+- **No auto-update**: the update module was removed; rebuild manually to update.
+
+## 📚 Documentation
+
+| Document | Contents |
+| --- | --- |
+| [REFACTOR_REPORT.md](./REFACTOR_REPORT.md) | Architecture analysis, removal scope, structure / memory / defect work, permissions, verification steps |
+| [NEXT-STEPS.md](./NEXT-STEPS.md) | Current status, P0–P3 tasks, dependencies, open decisions |
+| [src/README.md](./src/README.md) | Project layout after trimming |
+| [tools/build.ps1](./tools/build.ps1) | One-command build (handles environment prerequisites) |
+| [tools/prune/](./tools/prune/) | Re-runnable tooling used for the trim (project closure, pruning, dangling scan, config cleanup) |
+
+## 📄 License and credits
+
+This project keeps upstream's **GNU General Public License v3.0** (see [LICENSE](./LICENSE))
+and retains the original project's copyright and attribution.
+
+Thanks to (full list lives in the upstream repository):
+
+- [BeyondDimension/SteamTools](https://github.com/BeyondDimension/SteamTools) — the origin of this fork
+- [justcoding121/titanium-web-proxy](https://github.com/justcoding121/titanium-web-proxy) — reverse proxy engine
+- [AvaloniaUI/Avalonia](https://github.com/AvaloniaUI/Avalonia) and [amwx/FluentAvalonia](https://github.com/amwx/FluentAvalonia) — desktop UI
+- [reactiveui/ReactiveUI](https://github.com/reactiveui/ReactiveUI) and [dotnet/reactive](https://github.com/dotnet/reactive) — MVVM and reactive
+- [praeclarum/sqlite-net](https://github.com/praeclarum/sqlite-net) — local storage

@@ -1,281 +1,123 @@
-<h1 align="center">Steam++ 工具箱 🧰</h1>
-
 <div align="center">
 
-[English](./README.en.md) | 简体中文
+# Steam / GitHub 加速器（自用精简版）
 
-「Steam++」是一个包含多种Steam工具功能的工具箱，此工具的大部分功能都是需要您下载安装Steam才能使用。
+**仅保留「网络加速」的 Steam++ 精简分支** · 个人自用 · Windows 优先
 
-![Release Download](https://img.shields.io/github/downloads/BeyondDimension/SteamTools/total?style=flat-square)
-[![Release Version](https://img.shields.io/github/v/release/BeyondDimension/SteamTools?style=flat-square)](https://github.com/BeyondDimension/SteamTools/releases/latest)
-[![GitHub license](https://img.shields.io/github/license/BeyondDimension/SteamTools?style=flat-square)](LICENSE)
-[![GitHub Star](https://img.shields.io/github/stars/BeyondDimension/SteamTools?style=flat-square)](https://github.com/BeyondDimension/SteamTools/stargazers)
-[![GitHub Fork](https://img.shields.io/github/forks/BeyondDimension/SteamTools?style=flat-square)](https://github.com/BeyondDimension/SteamTools/network/members)
-![GitHub Repo size](https://img.shields.io/github/repo-size/BeyondDimension/SteamTools?style=flat-square&color=3cb371)
-[![GitHub Repo Languages](https://img.shields.io/github/languages/top/BeyondDimension/SteamTools?style=flat-square)](https://github.com/BeyondDimension/SteamTools/search?l=c%23)
-[![NET 6.0](https://img.shields.io/badge/dotnet-6.0-purple.svg?style=flat-square&color=512bd4)](https://docs.microsoft.com/zh-cn/dotnet/core/whats-new/dotnet-6)
-[![C# 10.0](https://img.shields.io/badge/c%23-10.0-brightgreen.svg?style=flat-square&color=6da86a)](https://docs.microsoft.com/zh-cn/dotnet/csharp/whats-new/csharp-10)
-
-[![Desktop UI](https://img.shields.io/badge/ui@desktop-AvaloniaUI-purple.svg?style=flat-square&color=8c45ab)](https://github.com/AvaloniaUI/Avalonia)
-[![Mobile GUI](https://img.shields.io/badge/gui@mobile-Xamarin.Forms-blue.svg?style=flat-square&color=3498db)](https://github.com/xamarin/Xamarin.Forms)
-[![Official WebSite](https://img.shields.io/badge/website@official-Ant%20Design%20of%20React-blue.svg?style=flat-square&color=61dafb)](https://github.com/ant-design/ant-design)
-[![BackManage WebSite](https://img.shields.io/badge/website@back_manage-Ant%20Design%20of%20Blazor-purple.svg?style=flat-square&color=512bd4)](https://github.com/ant-design-blazor/ant-design-blazor)
-
-[![Build Status](https://img.shields.io/endpoint.svg?url=https%3A%2F%2Factions-badge.atrox.dev%2FSteamTools-Team%2FSteamTools%2Fbadge%3Fref%3Ddevelop&style=flat-square)](https://actions-badge.atrox.dev/BeyondDimension/SteamTools/goto?ref=develop)
-[![GitHub Star](https://img.shields.io/github/stars/BeyondDimension/SteamTools.svg?style=social)](https://github.com/BeyondDimension/SteamTools)
-[![Gitee Star](https://gitee.com/rmbgame/SteamTools/badge/star.svg)](https://gitee.com/rmbgame/SteamTools)
-[![QQ群](https://img.shields.io/badge/QQ群-960746023-blue.svg?style=flat-square&color=12b7f5)](https://jq.qq.com/?_wv=1027&k=3JKPt4xC)
 </div>
 
-<div align="center"><img src="./resources/screenshots.jpg" /></div>
+---
 
-## 🚀 下载渠道
-- [GitHub Releases](https://github.com/BeyondDimension/SteamTools/releases)
-- [Gitee Releases](https://gitee.com/rmbgame/SteamTools/releases)
-- [Official WebSite](https://steampp.net)
-- [![Microsoft Store](./resources/MSStore_English.png)](https://www.microsoft.com/store/apps/9MTCFHS560NG)
-- [Arch Linux Package](https://aur.archlinux.org/packages/steam%2B%2B-bin)(By [zhanghua000](https://github.com/zhanghua000))
+## 这是什么
 
-## ✨ 功能
-1. 反代 Steam 的社区网页使其能正常访问
-	- 功能类似羽翼城大佬的 [steamcommunity_302](https://www.dogfight360.com/blog/686/)
-	- 使用 [Titanium-Web-Proxy](https://github.com/justcoding121/Titanium-Web-Proxy) 开源项目进行本地反代，使国内用户可以正常访问 Steam 社区页
-	- 相比 **302工具** 具有更快的启动速度，以及支持简单的脚本注入（还顺便支持了Pixiv、Discord、Twitch等网站的反代支持）
-2. 快速切换当前设备已记住登陆的 Steam 账号
-	- 该功能是读取 Steam 路径下存储的本地用户登录记录直接展示操作，可以多账号切换无需重新输入密码和令牌
-3. Steam游戏的成就统计管理功能
-	- 功能参考 [SteamAchievementManager](https://github.com/gibbed/SteamAchievementManager) 进行二次开发，修改了游戏列表的加载和操作易用性
-4. Steam本地两步身份验证器
-	- 功能参考 [WinAuth](https://github.com/winauth/winauth) 开发，可以使您不用启动移动版 Steam App 也能查看您的令牌
-	- 本地令牌交易市场报价确认
-	- 功能类似的软件例如：
-		- [WinAuth](https://github.com/winauth/winauth)
-		- [SteamDesktopAuthenticator](https://github.com/Jessecar96/SteamDesktopAuthenticator)
-5. 其他游戏工具
-	- 目前已有强制游戏无边框窗口化
+本仓库是 [BeyondDimension/SteamTools](https://github.com/BeyondDimension/SteamTools)（Steam++ / Watt Toolkit）的一个 **Fork**，经过大幅裁剪，**只保留 Steam 与 GitHub 的网络加速功能**，其余模块全部移除。
 
-<!--发布配置SelfContained=true时会自动打包VC++相关程序集-->
-<!--先决条件 Microsoft Visual C++ 2015-2019 Redistributable [64 位](https://aka.ms/vs/16/release/vc_redist.x64.exe) / [32 位](https://aka.ms/vs/16/release/vc_redist.x86.exe)-->
+原始项目的定位是「Steam 工具箱」——包含账号管理、令牌（Steam Guard）、成就解锁、ASF 挂卡、游戏工具、多平台代理等一大堆功能。这些对本项目**都不需要**：我只要一个干净、能加速 Steam 与 GitHub 的工具，代码越少越好维护。
+
+> 完整的技术分析、精简范围、优化项与缺陷修复清单见 **[REFACTOR_REPORT.md](./REFACTOR_REPORT.md)**；
+> 当前进度与后续待办见 **[NEXT-STEPS.md](./NEXT-STEPS.md)**。
+
+## ✨ 保留的功能
+
+| 功能 | 说明 |
+| --- | --- |
+| **加速项目开关** | 从服务端拉取加速项目列表（含 Steam、GitHub 等），按需勾选启用 |
+| **本地反向代理** | 基于 [Titanium.Web.Proxy](https://github.com/justcoding121/titanium-web-proxy) 实现，按域名匹配后改写上游 IP / 端口 / TLS SNI |
+| **系统代理模式** | 写入系统代理设置，浏览器与 Steam 客户端全局生效 |
+| **透明代理模式（Hosts）** | 不改系统代理，而是把加速域名写入 hosts 指向 `127.0.0.1` |
+| **用户脚本注入** | 从脚本商店获取 / 本地导入 JS 脚本，注入到被代理的页面 |
+| **上游代理（二级代理）** | 支持为加速流量再套一层 HTTP 代理 |
+| **上游 DNS 选择** | 内置阿里 / 114 / DNSPod / 百度 / Google / Cloudflare 等预设 |
+| **根证书管理** | 自动创建、安装、检测用于 HTTPS 解密的本地根证书 |
+
+## ❌ 相比上游移除的内容
+
+账号体系与短信验证、Steam Guard 令牌、成就解锁与管理、ArchiSteamFarm 挂卡、游戏工具（强制窗口化 / 挂卡）、GOG 与其他平台代理、公告与通知播报、应用更新、捐赠排行、移动端（Android / iOS / Xamarin.Forms）、服务端与短信服务、全部构建工具工程、以及上游 V1 的遗留代码库（`source/`）。
+
+工程数从 **58 → 22**，`src` 下 C# 文件从 **1203 → 约 570**，Git 子模块从 **13 → 5**。
+
 ## 🖥 系统要求
-### Windows
 
-OS                                    | Version                 | Architectures   | Lifecycle
---------------------------------------|-------------------------|-----------------|----------
-[Windows Client][Windows-client]      | 7 SP1(**\***), 8.1      | x64        | [Windows][Windows-lifecycle]
-[Windows 10 Client][Windows-client]   | Version 1607+(**\***)   | x64        | [Windows][Windows-lifecycle]
-[Windows Server][Windows-Server]      | 2012+                   | x64        | [Windows Server][Windows-Server-lifecycle]
+- **Windows 10 / 11**（主要目标平台，验证最充分）
+- Linux / macOS 的工程仍保留并可通过编译，但**未做运行验证**
 
-**\*** Windows 7 SP1 is supported with [Extended Security Updates](https://docs.microsoft.com/troubleshoot/windows-client/windows-7-eos-faq/windows-7-extended-security-updates-faq) installed.  
-**\*** Microsoft Store/Desktop Bridge Version 1809+
+## ⌨️ 构建
 
-[Windows-client]: https://www.microsoft.com/windows/
-[Windows-lifecycle]: https://support.microsoft.com/help/13853/windows-lifecycle-fact-sheet
-[win-client-docker]: https://hub.docker.com/_/microsoft-windows
-[Windows-Server-lifecycle]: https://docs.microsoft.com/windows-server/get-started/windows-server-release-info
-[Nano-Server]: https://docs.microsoft.com/windows-server/get-started/getting-started-with-nano-server
-[Windows-Server]: https://docs.microsoft.com/windows-server/
+需要 **.NET SDK 6.0.101**（由 `global.json` 钉死）。仓库提供了免管理员的一键脚本：
 
-### Linux
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\build.ps1
 
-OS                                    | Version               | Architectures     | Lifecycle
---------------------------------------|-----------------------|-------------------|----------
-[Alpine Linux][Alpine]                | 3.13+                 | x64, Arm64        | [Alpine][Alpine-lifecycle]
-[CentOS][CentOS]                      | 7+                    | x64               | [CentOS][CentOS-lifecycle]
-[Debian][Debian]                      | 10+                   | x64, Arm64        | [Debian][Debian-lifecycle]
-[Fedora][Fedora]                      | 33+                   | x64               | [Fedora][Fedora-lifecycle]
-[openSUSE][OpenSUSE]                  | 15+                   | x64               | [OpenSUSE][OpenSUSE-lifecycle]
-[Red Hat Enterprise Linux][RHEL]      | 7+                    | x64, Arm64        | [Red Hat][RHEL-lifecycle]
-[SUSE Enterprise Linux (SLES)][SLES]  | 12 SP2+               | x64               | [SUSE][SLES-lifecycle]
-[Ubuntu][Ubuntu]                      | 16.04, 18.04, 20.04+  | x64, Arm64        | [Ubuntu][Ubuntu-lifecycle]
-[Deepin / UOS][Deepin]                | 20+                   | x64               | [Deepin][Deepin-lifecycle]
-[Arch Linux][Arch]                    |                       | x64               | 
+# 构建 Release 并跑单元测试
+powershell -ExecutionPolicy Bypass -File tools\build.ps1 -Configuration Release -Test
+```
 
-[Alpine]: https://alpinelinux.org/
-[Alpine-lifecycle]: https://wiki.alpinelinux.org/wiki/Alpine_Linux:Releases
-[CentOS]: https://www.centos.org/
-[CentOS-lifecycle]:https://wiki.centos.org/FAQ/General
-[CentOS-docker]: https://hub.docker.com/_/centos
-[CentOS-pm]: https://docs.microsoft.com/dotnet/core/install/linux-package-manager-centos8
-[Debian]: https://www.debian.org/
-[Debian-lifecycle]: https://wiki.debian.org/DebianReleases
-[Debian-pm]: https://docs.microsoft.com/dotnet/core/install/linux-package-manager-debian10
-[Fedora]: https://getfedora.org/
-[Fedora-lifecycle]: https://fedoraproject.org/wiki/End_of_life
-[Fedora-docker]: https://hub.docker.com/_/fedora
-[Fedora-msft-pm]: https://docs.microsoft.com/dotnet/core/install/linux-package-manager-fedora32
-[Fedora-pm]: https://fedoraproject.org/wiki/DotNet
-[OpenSUSE]: https://opensuse.org/
-[OpenSUSE-lifecycle]: https://en.opensuse.org/Lifetime
-[OpenSUSE-docker]: https://hub.docker.com/r/opensuse/leap
-[OpenSUSE-pm]: https://docs.microsoft.com/dotnet/core/install/linux-package-manager-opensuse15
-[RHEL]: https://www.redhat.com/en/technologies/linux-platforms/enterprise-linux
-[RHEL-lifecycle]: https://access.redhat.com/support/policy/updates/errata/
-[RHEL-msft-pm]: https://docs.microsoft.com/dotnet/core/install/linux-package-manager-rhel8
-[RHEL-pm]: https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8/html/developing_.net_applications_in_rhel_8/using-net-core-on-rhel_gsg#installing-net-core_gsg
-[SLES]: https://www.suse.com/products/server/
-[SLES-lifecycle]: https://www.suse.com/lifecycle/
-[SLES-pm]: https://docs.microsoft.com/dotnet/core/install/linux-package-manager-sles15
-[Ubuntu]: https://ubuntu.com/
-[Ubuntu-lifecycle]: https://wiki.ubuntu.com/Releases
-[Ubuntu-pm]: https://docs.microsoft.com/dotnet/core/install/linux-package-manager-ubuntu-2004
-[Deepin]: https://www.deepin.org/
-[Deepin-lifecycle]: https://www.deepin.org/release-notes
-[Arch]: https://archlinux.org/
+脚本会自动处理三个非显然的前置条件（否则构建会失败，且报错信息不指向真正原因）：
 
-### macOS
+1. 若本机没有 SDK 6.0.101，会下载并解压到用户目录（**不写注册表、不改 PATH、不需要管理员**）；
+2. 拉取子模块，并为 `references/reactive`（Rx.NET）拉**完整 git 历史** —— 它使用 Nerdbank.GitVersioning，浅克隆会导致构建失败；同时为它单独开启 `core.longpaths`（内含一个超出 Windows MAX_PATH 的文件）；
+3. NuGet 还原加 `--disable-parallel`，规避并行还原偶发的 `Access to the path ... is denied` 竞态。
 
-OS                            | Version                   | Architectures     |
-------------------------------|---------------------------|-------------------|
-[macOS][macOS]                | 10.14+                    | x64               |
+手动构建等价命令：
 
-[macOS]: https://support.apple.com/macos
+```bash
+git submodule update --init --recursive
+dotnet restore src/ST.Client.Desktop.Avalonia.App/ST.Client.Avalonia.App.csproj --disable-parallel
+dotnet build   src/ST.Client.Desktop.Avalonia.App/ST.Client.Avalonia.App.csproj -c Debug --no-restore
+```
 
-OS                            | Version                 | Architectures                                                      |
-------------------------------|-------------------------|--------------------------------------------------------------------|
-[Android][Android]            | 5.0(API 21)+            | [x64][Android-x64], [Arm64][Android-Arm64], [Arm32][Android-Arm32] |
+> **注意**：`nuget.config` 中原有的 `AvaloniaCI` 源（`nuget.avaloniaui.net`）已下线（返回 HTTP 521），会导致还原直接失败，因此已移除并改为显式指向 nuget.org。
 
-[Android]: https://support.google.com/android
-[Android-x64]: https://developer.android.google.cn/ndk/guides/abis?hl=zh_cn#86-64
-[Android-Arm32]: https://developer.android.google.cn/ndk/guides/abis?hl=zh_cn#v7a
-[Android-Arm64]: https://developer.android.google.cn/ndk/guides/abis?hl=zh_cn#arm64-v8a
+## ▶️ 运行
 
-### ~~iOS / iPadOS~~
+**需要管理员权限**，因为要用到以下系统能力：
 
-OS                            | Version                 | Architectures     |
-------------------------------|-------------------------|-------------------|
-[iOS][iOS]                    | 10.0+                   | x64, Arm32, Arm64 |
+- 监听 **443 / 80** 端口（透明模式；Windows 下 80 端口被占用时会降级跳过）
+- 写入 **hosts** 文件（透明代理模式）
+- 安装**根证书**到系统信任存储（HTTPS 解密）
 
-[iOS]: https://support.apple.com/ios
+## 🌐 加速数据来源
 
-## ⛔ 不受支持的操作系统
-- Windows 8
-	- [由于微软官方对该产品的支持已结束](https://docs.microsoft.com/zh-cn/lifecycle/products/windows-8)，故本程序无法在此操作系统上运行，[建议升级到 Windows 8.1](https://support.microsoft.com/zh-cn/windows/%E4%BB%8E-windows-8-%E6%9B%B4%E6%96%B0%E5%88%B0-windows-8-1-17fc54a7-a465-6b5a-c1a0-34140afd0669)
-- Windows Server 2008 R2 SP1
-	- 仅可使用 1.X 版本，2.X 开始不受支持，建议升级到更高版本
-- 无桌面 GUI 的 Windows Server / Linux 版本
-- Xbox or Windows Mobile / Phone
+加速项目列表来自服务端匿名接口（默认 `https://api.steampp.net`）：
 
-## 🌏 路线图
-查看这个 [milestones](https://github.com/BeyondDimension/SteamTools/milestones) 来了解我们下一步的开发计划，并随时提出问题。
+```
+api/Accelerate/All           加速项目组（域名、上游端口、SNI、代理类型…）
+api/script/basics            内置脚本
+api/script/table/*           脚本商店
+api/script/updates           脚本更新
+api/version/checkupdate3/*   版本策略
+```
 
-## ⌨️ 开发环境
-[Visual Studio 2022](https://visualstudio.microsoft.com/zh-hans/vs/)   
-[JetBrains Rider](https://www.jetbrains.com/rider/)  
-~~[Visual Studio 2022 for Mac Preview](https://visualstudio.microsoft.com/zh-hans/vs/mac/)~~  
-~~[Visual Studio Code](https://code.visualstudio.com/)~~
-- 系统要求
-	- [Windows 10 版本 2004 或更高版本：家庭版、专业版、教育版和企业版（不支持 LTSC 和 Windows 10 S，在较早的操作系统上可能不受支持）](https://docs.microsoft.com/zh-cn/visualstudio/releases/2019/system-requirements)
-	- [macOS 10.14 Mojave 或更高版本](https://docs.microsoft.com/zh-cn/visualstudio/productinfo/vs2019-system-requirements-mac)
-- 工作负载
-	- Web 和云
-		- ASP.NET 和 Web 开发
-	- 桌面应用和移动应用
-		- .NET 桌面开发
-		- 通用 Windows 平台开发
-		- 使用 .NET 的移动开发
-	- 其他工具集
-		- .NET Core 跨平台开发
-- 单个组件
-	- GitHub Extension for Visual Studio
-	- Windows 10 SDK (10.0.19041.0)
-- [Visual Studio Marketplace](https://marketplace.visualstudio.com/)
-	- [Avalonia for Visual Studio](https://marketplace.visualstudio.com/items?itemName=AvaloniaTeam.AvaloniaforVisualStudio)
-	- [NUnit VS Templates](https://marketplace.visualstudio.com/items?itemName=NUnitDevelopers.NUnitTemplatesforVisualStudio)
+这些接口**均为匿名接口，不需要登录**。默认地址在 `src/Startup2.cs` 的 `SetApiBaseUrl` 中设置；如需改用自建后端，改这一处即可。
 
-[OpenJDK 11](https://docs.microsoft.com/zh-cn/java/openjdk/download#openjdk-11)  
-[Android Studio 2021.1.1 或更高版本](https://developer.android.google.cn/studio/)  
-[Xcode 13 或更高版本](https://developer.apple.com/xcode/)
+> 本项目不再需要任何内嵌密钥（`aes-key.pfx` / `rsa-public-key.pfx`）——
+> 上游把它们用于账号接口的传输加密，已随账号模块一起移除。
 
-## 🏗️ [项目结构](./src/README.md)
+## 🔧 已知限制
 
-<!--
-* [LibVLCSharp](https://github.com/videolan/libvlcsharp)
-* [Chromium Embedded Framework (CEF)](https://github.com/chromiumembedded/cef)
-* [CefNet](https://github.com/CefNet/CefNet)
-* [CefSharp](https://github.com/cefsharp/CefSharp)
-* [ZXing.Net.Mobile](https://github.com/Redth/ZXing.Net.Mobile)
-* [Floating Action Button Speed Dial](https://github.com/leinardi/FloatingActionButtonSpeedDial)
--->
-<!--👇图标如果发生更改，还需更改 Tools.OpenSourceLibraryList(Program.OpenSourceLibraryListEmoji) -->
-## 📄 感谢以下开源项目
-* [Newtonsoft.Json](https://github.com/JamesNK/Newtonsoft.Json)
-* [MetroRadiance](https://github.com/Grabacr07/MetroRadiance)
-* [MetroTrilithon](https://github.com/Grabacr07/MetroTrilithon)
-* [Livet](https://github.com/runceel/Livet)
-* [StatefulModel](https://github.com/ugaya40/StatefulModel)
-* [Hardcodet.NotifyIcon](https://github.com/HavenDV/Hardcodet.NotifyIcon.Wpf.NetCore)
-* [System.Reactive](https://github.com/dotnet/reactive)
-* [Titanium-Web-Proxy](https://github.com/justcoding121/Titanium-Web-Proxy)
-* [Portable.BouncyCastle](https://github.com/novotnyllc/bc-csharp)
-* [Ninject](https://github.com/ninject/Ninject)
-* [log4net](https://github.com/apache/logging-log4net)
-* [SteamAchievementManager](https://github.com/gibbed/SteamAchievementManager)
-* [ArchiSteamFarm](https://github.com/JustArchiNET/ArchiSteamFarm)
-* [Steam4NET](https://github.com/SteamRE/Steam4NET)
-* [WinAuth](https://github.com/winauth/winauth)
-* [SteamDesktopAuthenticator](https://github.com/Jessecar96/SteamDesktopAuthenticator)
-* [Gameloop.Vdf](https://github.com/shravan2x/Gameloop.Vdf)
-* [DnsClient.NET](https://github.com/MichaCo/DnsClient.NET)
-* [Costura.Fody](https://github.com/Fody/Costura)
-* [MessagePack-CSharp](https://github.com/neuecc/MessagePack-CSharp)
-* [CSharpVitamins.ShortGuid](https://github.com/AigioL/CSharpVitamins.ShortGuid)
-* [Nito.Comparers](https://github.com/StephenCleary/Comparers)
-* [Nito.Disposables](https://github.com/StephenCleary/Disposables)
-* [Crc32.NET](https://github.com/force-net/Crc32.NET)
-* [gfoidl.Base64](https://github.com/gfoidl/Base64)
-* [sqlite-net-pcl](https://github.com/praeclarum/sqlite-net)
-* [AutoMapper](https://github.com/AutoMapper/AutoMapper)
-* [Polly](https://github.com/App-vNext/Polly)
-* [TaskScheduler](https://github.com/dahall/taskscheduler)
-* [SharpZipLib](https://github.com/icsharpcode/SharpZipLib)
-* [SevenZipSharp](https://github.com/squid-box/SevenZipSharp)
-* [ZstdNet](https://github.com/skbkontur/ZstdNet)
-* [Depressurizer](https://github.com/Depressurizer/Depressurizer)
-* [NLog](https://github.com/nlog/NLog)
-* [NUnit](https://github.com/nunit/nunit)
-* [ReactiveUI](https://github.com/reactiveui/reactiveui)
-* [MessageBox.Avalonia](https://github.com/AvaloniaUtils/MessageBox.Avalonia)
-* [AvaloniaUI](https://github.com/AvaloniaUI/Avalonia)
-* [AvaloniaGif](https://github.com/jmacato/AvaloniaGif)
-* [Avalonia XAML Behaviors](https://github.com/wieslawsoltes/AvaloniaBehaviors)
-* [FluentAvalonia](https://github.com/amwx/FluentAvalonia)
-* [APNG.NET](https://github.com/jz5/APNG.NET)
-* [Moq](https://github.com/moq/moq4)
-* [NPOI](https://github.com/nissl-lab/npoi)
-* [Fleck](https://github.com/statianzo/Fleck)
-* [Swashbuckle.AspNetCore](https://github.com/domaindrivendev/Swashbuckle.AspNetCore)
-* [AspNet.Security.OpenId.Providers](https://github.com/aspnet-contrib/AspNet.Security.OpenId.Providers)
-* [AspNet.Security.OAuth.Providers](https://github.com/aspnet-contrib/AspNet.Security.OAuth.Providers)
-* [ZXing.Net](https://github.com/micjahn/ZXing.Net)
-* [QRCoder](https://github.com/codebude/QRCoder)
-* [QR Code Generator for .NET](https://github.com/manuelbl/QrCodeGenerator)
-* [TinyPinyin](https://github.com/promeG/TinyPinyin)
-* [TinyPinyin.Net](https://github.com/hueifeng/TinyPinyin.Net)
-* [Packaging utilities for .NET Core](https://github.com/qmfrederik/dotnet-packaging)
-* [React](https://github.com/facebook/react)
-* [Ant Design](https://github.com/ant-design/ant-design)
-* [Ant Design Blazor](https://github.com/ant-design-blazor/ant-design-blazor)
-* [Toast messages for Xamarin.iOS](https://github.com/andrius-k/Toast)
-* [ImageCirclePlugin](https://github.com/jamesmontemagno/ImageCirclePlugin)
-* [Visual Studio App Center SDK for .NET](https://github.com/microsoft/appcenter-sdk-dotnet)
-* [AppCenter-XMac](https://github.com/nor0x/AppCenter-XMac)
-* [MSBuild.Sdk.Extras](https://github.com/novotnyllc/MSBuildSdkExtras)
-* [Xamarin.Essentials](https://github.com/xamarin/essentials)
-* [Xamarin.Forms](https://github.com/xamarin/Xamarin.Forms)
-* [Open Source Components for Xamarin](https://github.com/xamarin/XamarinComponents)
-* [Google Play Services / Firebase / ML Kit for Xamarin.Android](https://github.com/xamarin/GooglePlayServicesComponents)
-* [Picasso](https://github.com/square/picasso)
-* [OkHttp](https://github.com/square/okhttp)
-* [Material Components for Android](https://github.com/material-components/material-components-android)
-* [AndroidX for Xamarin.Android](https://github.com/xamarin/AndroidX)
-* [Android Jetpack](https://github.com/androidx/androidx)
-* [ConstraintLayout](https://github.com/androidx/constraintlayout)
-* [Entity Framework Core](https://github.com/dotnet/efcore)
-* [ASP.NET Core](https://github.com/dotnet/aspnetcore)
-* [Windows Forms](https://github.com/dotnet/winforms)
-* [Windows Presentation Foundation (WPF)](https://github.com/dotnet/wpf)
-* [C#/WinRT](https://github.com/microsoft/CsWinRT)
-* [command-line-api](https://github.com/dotnet/command-line-api)
-* [.NET Runtime](https://github.com/dotnet/runtime)
-* [Fluent UI System Icons](https://github.com/microsoft/fluentui-system-icons)
-* [Material design icons](https://github.com/google/material-design-icons)
+- **运行期尚未验证**：代码已通过全量编译（逐工程 25/25、单元测试 13/13），但**尚未在真实环境跑通一次完整加速流程**（代理 / 证书 / hosts）。详见 NEXT-STEPS 的 P0-2。
+- **上游 TLS 校验被放宽**：`OnCertificateValidation` 中设置 `e.IsValid = true`，这是**上游原有的取舍**（为兼容自建 / 镜像加速节点），本项目**未改动**。若只用官方节点，可考虑收紧为按错误类型白名单。
+- **打包链路不完整**：`packaging/` 中依赖已移除工具工程的脚本已清理，`build.ps1` 保留发布能力；上游的 Store / UWP 打包流程未保留。
+- **无自动更新**：应用更新模块已移除，更新需手动重新构建。
+
+## 📚 文档索引
+
+| 文档 | 内容 |
+| --- | --- |
+| [REFACTOR_REPORT.md](./REFACTOR_REPORT.md) | 架构分析、精简范围、结构 / 内存 / 缺陷优化、授权清单、验证步骤 |
+| [NEXT-STEPS.md](./NEXT-STEPS.md) | 当前进度、P0~P3 待办、依赖关系、待决策点 |
+| [src/README.md](./src/README.md) | 精简后的工程结构与各自职责 |
+| [tools/build.ps1](./tools/build.ps1) | 一键构建（含环境前置条件处理） |
+| [tools/prune/](./tools/prune/) | 本次精简所用的可复跑工具链（工程闭包分析 / 裁剪 / 残留扫描 / 配置收尾） |
+
+## 📄 许可证与致谢
+
+本项目沿用上游的 **GNU General Public License v3.0**（见 [LICENSE](./LICENSE)），并保留原始项目的版权与署名。
+
+感谢以下项目（完整清单见上游仓库）：
+
+- [BeyondDimension/SteamTools](https://github.com/BeyondDimension/SteamTools) —— 本 Fork 的源头
+- [justcoding121/titanium-web-proxy](https://github.com/justcoding121/titanium-web-proxy) —— 本地反向代理引擎
+- [AvaloniaUI/Avalonia](https://github.com/AvaloniaUI/Avalonia) 与 [amwx/FluentAvalonia](https://github.com/amwx/FluentAvalonia) —— 桌面 UI
+- [reactiveui/ReactiveUI](https://github.com/reactiveui/ReactiveUI) 与 [dotnet/reactive](https://github.com/dotnet/reactive) —— MVVM 与响应式
+- [praeclarum/sqlite-net](https://github.com/praeclarum/sqlite-net) —— 本地存储

@@ -25,6 +25,34 @@
 | D3 | TLS 校验放宽 | ⬜ 待你决定 | 见下文 |
 | D4 | 双列表内存 | ⬜ 待实测 | 见下文 |
 
+### 第三轮：文档与元数据改写（已完成）
+
+按「自用、可大幅删改」的授权，做了**文档 + 元数据 + 残留清理**（不动代码结构）：
+
+**重写**
+| 文件 | 处理 |
+| --- | --- |
+| `README.md` | 从「Steam++ 工具箱（19KB，含已删功能的完整介绍与下载渠道）」重写为「仅做 Steam/GitHub 加速的自用版」：保留功能表、已移除清单、构建与运行要求、数据源说明、**已知限制（含未验证项）**、文档索引、GPLv3 与上游署名 |
+| `README.en.md` | 同上英文版 |
+| `src/README.md` | 从「58 工程结构」重写为当前的 22 个 src 工程 + 3 个测试工程的职责表 |
+| `packaging/build.ps1` | 删掉依赖已删工具 `ST.Tools.Publish` 与上游发布 Token 的那半；保留逐 RID `dotnet publish`（12 个 PublishProfiles 全在），新增 `-Rid` 单目标与 `-Hash` 校验 |
+
+**删除**（上游分发链路 / 已移除平台 / 死文件）
+- `download-guide.md`、`release-keylol.md`、`release-template.md` —— 上游下载与发布流程文档，自用无意义
+- `packaging/build.v1.ps1` —— V1 遗留打包脚本（`source/` 已删）
+- `resources/ProjectPathUtil.cs` —— **死文件**（无任何工程编译它），且常量指向已删工程
+- `resources/RewardRecord.json` —— 运营/奖励记录
+- `resources/screenshot-android*.png`、`screenshot_asf_*.png` —— 已移除平台（Android / ASF）的截图
+- `_probe/` —— 我在早期探测写权限时遗留的垃圾目录
+
+**保留**（有引用或仍需要）
+- `resources/AppIcon/`（被 App csproj 引用）、`Areas/`、`icon/`、`MSStore_English.png`（有引用）
+- `packaging/Info.plist`、`build-osx-app.sh`、`SHA256.ps1`（无已删工程引用，仍可用）
+
+**验证**：改写后重新构建 App → **0 错误**；无任何残留引用指向被删文件。
+
+---
+
 ### 本轮 P2-8 新发现并修复的缺陷（全部是我上一轮裁剪引入）
 
 | 工程 | 问题 | 处理 |
