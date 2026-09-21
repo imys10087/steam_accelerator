@@ -4,6 +4,7 @@ using System.Application.Repositories;
 using System.Application.Repositories.Implementation;
 using System.Application.Services;
 using System.Application.Services.Implementation;
+using System.Net.Http;
 
 // ReSharper disable once CheckNamespace
 namespace Microsoft.Extensions.DependencyInjection

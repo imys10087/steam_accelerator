@@ -270,25 +270,9 @@ namespace System.Application.UI.ViewModels
 
         public async void OpenScriptStoreWindow()
         {
-            CustomWindow window = default;
-            if (IUserManager.Instance.GetCurrentUser() == null)
-            {
-                var result = await MessageBox.ShowAsync(AppResources.ScriptShop_NoLogin, button: MessageBox.Button.OKCancel);
-                if (result == MessageBox.Result.OK)
-                {
-                    window = CustomWindow.LoginOrRegister;
-
-                }
-            }
-            else
-            {
-                window = CustomWindow.ScriptStore;
-            }
-
-            if (window != default)
-            {
-                await IWindowManager.Instance.Show(window, resizeMode: ResizeMode.CanResize);
-            }
+            // 脚本商店接口（api/script/*）全部为匿名接口，无需登录态，
+            // 因此移除了原先的「未登录则弹窗并跳转登录窗口」拦截逻辑。
+            await IWindowManager.Instance.Show(CustomWindow.ScriptStore, resizeMode: ResizeMode.CanResize);
         }
 
         public void AllEnableScript()

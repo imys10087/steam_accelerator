@@ -463,7 +463,7 @@ namespace System.Application.Services.CloudService
                 isShowResponseErrorMessage, errorAppendText).ConfigureAwait(false);
             if (preflight != null) return preflight;
 
-            const HttpMethod method = HttpMethod.Get;
+            var method = HttpMethod.Get;
             IApiResponse responseResult;
 
             try
@@ -598,7 +598,7 @@ namespace System.Application.Services.CloudService
                 isPolly, true, cancellationToken, method, requestUri, request,
                 responseContentMaybeNull, isSecurity, isShowResponseErrorMessage, errorAppendText);
 
-        public Task<IApiResponse> SendAsync<TRequestModel>(
+        public async Task<IApiResponse> SendAsync<TRequestModel>(
             CancellationToken cancellationToken,
             HttpMethod method,
             string requestUri,
@@ -608,11 +608,12 @@ namespace System.Application.Services.CloudService
             bool isShowResponseErrorMessage = true,
             string? errorAppendText = null,
             bool isPolly = false)
-            => SendWithRetryAsync<TRequestModel, object>(
+            => await SendWithRetryAsync<TRequestModel, object>(
                 isPolly, true, cancellationToken, method, requestUri, request,
-                true, isSecurity, isShowResponseErrorMessage, errorAppendText);
+                true, isSecurity, isShowResponseErrorMessage, errorAppendText)
+                .ConfigureAwait(false);
 
-        public Task<IApiResponse> SendAsync(
+        public async Task<IApiResponse> SendAsync(
             CancellationToken cancellationToken,
             HttpMethod method,
             string requestUri,
@@ -620,9 +621,10 @@ namespace System.Application.Services.CloudService
             bool isShowResponseErrorMessage = true,
             string? errorAppendText = null,
             bool isPolly = false)
-            => SendWithRetryAsync<object, object>(
+            => await SendWithRetryAsync<object, object>(
                 isPolly, true, cancellationToken, method, requestUri, null,
-                true, false, isShowResponseErrorMessage, errorAppendText);
+                true, false, isShowResponseErrorMessage, errorAppendText)
+                .ConfigureAwait(false);
 
         public Task<IApiResponse<TResponseModel>> SendAsync<TResponseModel>(
             CancellationToken cancellationToken,

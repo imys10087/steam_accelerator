@@ -25,22 +25,14 @@ namespace System.Application.UI.Views
 
         static MainView()
         {
+            // VM → View 映射。只保留加速相关页面 + 设置/关于。
+            // 其余页面（起始页/账号/成就/令牌/挂卡/游戏工具/调试）已随功能模块移除。
             PageTypes = new Dictionary<Type, Type>
             {
                 { typeof(ProxyScriptManagePageViewModel), typeof(ProxyScriptManagePage) },
-                { typeof(StartPageViewModel), typeof(StartPage) },
-                { typeof(SteamAccountPageViewModel), typeof(SteamAccountPage) },
+                { typeof(CommunityProxyPageViewModel), typeof(CommunityProxyPage) },
                 { typeof(SettingsPageViewModel), typeof(SettingsPage) },
                 { typeof(AboutPageViewModel), typeof(AboutPage) },
-#if DEBUG
-                { typeof(DebugPageViewModel), typeof(DebugPage) },
-#endif
-                { typeof(GameListPageViewModel), typeof(GameListPage) },
-                { typeof(CommunityProxyPageViewModel), typeof(CommunityProxyPage) },
-                { typeof(LocalAuthPageViewModel), typeof(LocalAuthPage) },
-                { typeof(GameRelatedPageViewModel), typeof(GameRelatedPage) },
-                { typeof(ArchiSteamFarmPlusPageViewModel), typeof(ArchiSteamFarmPlusPage) },
-                //{ typeof(GameRelated_BorderlessPageViewModel), typeof(GameRelated_BorderlessPage) },
             };
         }
 

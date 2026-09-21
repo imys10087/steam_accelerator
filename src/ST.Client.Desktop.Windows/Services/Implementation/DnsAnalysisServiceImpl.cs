@@ -96,7 +96,8 @@ namespace System.Application.Services.Implementation
                     UseCache = false,
                 };
 
-                using var client = new LookupClient(options);
+                // 注意：LookupClient 不实现 IDisposable，原写法 `using var` 会编译失败
+                var client = new LookupClient(options);
 
                 var response = await client
                     .QueryServerAsync(

@@ -28,19 +28,5 @@ namespace System.Application.UI
     }
 }
 
-// ReSharper disable once CheckNamespace
-namespace System
-{
-    public static class ResIconEnumExtensions
-    {
-        public static ResIcon ToIcon(this FastLoginChannel fastLoginChannel)
-            => fastLoginChannel switch
-            {
-                FastLoginChannel.Steam => ResIcon.Steam,
-                FastLoginChannel.Microsoft => ResIcon.Xbox,
-                FastLoginChannel.QQ => ResIcon.QQ,
-                FastLoginChannel.Apple => ResIcon.Apple,
-                _ => throw new ArgumentOutOfRangeException(nameof(fastLoginChannel), fastLoginChannel, null),
-            };
-    }
-}
+// 已移除 ResIconEnumExtensions（FastLoginChannel → ResIcon 映射）：
+// 账号快速登录渠道随账号模块一并删除，该扩展已无使用者。

@@ -1,4 +1,4 @@
-using NLog;
+﻿using NLog;
 using System.Linq;
 using System.Net;
 using System.Runtime.Versioning;
@@ -86,7 +86,7 @@ namespace System.Application.UI
                 appInstance?.Dispose();
                 // Ensure to flush and stop internal timers/threads before application-exit (Avoid segmentation fault on Linux)
                 LogManager.Shutdown();
-                ArchiSteamFarm.LogManager.Shutdown();
+                // 已移除 ArchiSteamFarm.LogManager.Shutdown()：ASF 挂卡模块已裁剪
             }
         }
 

@@ -87,11 +87,8 @@ namespace System.Application.Services.CloudService
             IProgress<float>? progress, CancellationToken cancellationToken)
             => connection.DownloadAsync(cancellationToken, requestUri, cacheFilePath, progress, isAnonymous);
 
-        Task<HttpResponseMessage> ICloudServiceClient.Forward(
-            HttpRequestMessage request,
-            HttpCompletionOption completionOption,
-            CancellationToken cancellationToken)
-            => throw new NotSupportedException("服务端转发接口已废弃。");
+        // 注：原实现还有一个 ICloudServiceClient.Forward 显式实现（对应已被标记
+        // [Obsolete("Http Error 403", true)] 的服务端转发接口）。该成员已随接口一并移除。
 
         async Task<string> ICloudServiceClient.Info()
         {

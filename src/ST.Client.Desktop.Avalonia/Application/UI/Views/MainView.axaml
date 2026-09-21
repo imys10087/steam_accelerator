@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -99,74 +99,10 @@
         </ui:Frame>
       </ui:NavigationView.Content>
 
-      <ui:NavigationView.PaneCustomContent>
-        <ui:Button Cursor="Hand"
-                   Margin="6"
-                   Padding="10 5"
-                   MaxWidth="240"
-                   BorderThickness="0"
-                   Background="Transparent"
-                   HorizontalContentAlignment="Stretch"
-                   HorizontalAlignment="Stretch"
-                   Command="{Binding OpenUserMenu}">
-          <DockPanel
-                      HorizontalAlignment="Stretch">
-            <!--<Image x:Name="avatar" Source="/Application/UI/Assets/Icon.ico" Height="64" Width="64"/>
-            <Label Content="{ReflectionBinding Path=Title}" Foreground="{DynamicResource HighlightForegroundBrushKey}" VerticalContentAlignment="Center" FontSize="18" Margin="8,0,0,0"/>-->
-            <gif:Image2 x:Name="avatar"
-                   Source="{ReflectionBinding Path=AvatarPath, Source={x:Static service:UserService.Current},Mode=OneWay,Converter={StaticResource BitmapAssetValueConverter}}"
-                   Stretch="Uniform"
-                   VerticalAlignment="Center"
-                   HorizontalAlignment="Left"
-                   DecodeWidth="64"
-                   Height="64"
-                   Width="64"
-                   FallbackSource="avares://System.Application.SteamTools.Client.Avalonia/Application/UI/Assets/AppResources/avatar.jpg">
-              <gif:Image2.Clip>
-                <EllipseGeometry Rect="0,0,64,64" />
-              </gif:Image2.Clip>
-            </gif:Image2>
-            <StackPanel Spacing="5" VerticalAlignment="Center">
-              <TextBlock Text="{ReflectionBinding Path=Res.User_UnLogin,Mode=OneWay,Source={x:Static resx:R.Current}}"
-                        IsVisible="{ReflectionBinding Path=User,Mode=OneWay,Source={x:Static service:UserService.Current},Converter={StaticResource IsNullConverter}}"
-                        Foreground="{DynamicResource HighlightForegroundBrushKey}"
-                        FontSize="14"
-                        VerticalAlignment="Center"/>
-              <controls:ScrollingTextBlock Text="{ReflectionBinding Path=User.NickName,Mode=OneWay,Source={x:Static service:UserService.Current}}"
-                     IsVisible="{ReflectionBinding Path=User,Mode=OneWay,Source={x:Static service:UserService.Current},Converter={StaticResource IsNullConverter},ConverterParameter=invert}"
-                     Foreground="{DynamicResource HighlightForegroundBrushKey}"
-                     FontSize="14"
-                     VerticalAlignment="Center"/>
-              <!--<TextBlock Text="{ReflectionBinding Path=PhoneNumber,Mode=OneWay,Source={x:Static service:UserService.Current}}"
-                        IsVisible="{ReflectionBinding Path=User.HasPhoneNumber,Mode=OneWay,Source={x:Static service:UserService.Current}}"
-                        Foreground="{DynamicResource InactiveForegroundBrushKey}"
-                        FontSize="12"
-                        VerticalAlignment="Center"/>-->
-            </StackPanel>
-
-          </DockPanel>
-          <ui:Button.Flyout>
-            <ui:MenuFlyout Placement="RightEdgeAlignedTop">
-              <ui:MenuFlyoutItem Text="{ReflectionBinding Path=Res.RefreshAvatar,Mode=OneWay,Source={x:Static resx:R.Current}}"
-                                 Command="{ReflectionBinding Path=RefreshUserAvatarAsync,Source={x:Static service:UserService.Current}}"/>
-              <ui:MenuFlyoutItem Text="{ReflectionBinding Path=Res.UserProfile,Mode=OneWay,Source={x:Static resx:R.Current}}"
-                                 Command="{ReflectionBinding Path=ShowWindow,Source={x:Static service:UserService.Current}}"
-                                 CommandParameter="UserProfile"/>
-              <ui:MenuFlyoutItem Text="{ReflectionBinding Path=Res.User_ChangePhoneNum,Mode=OneWay,Source={x:Static resx:R.Current}}"
-                                 IsVisible="{ReflectionBinding Path=HasPhoneNumber,Source={x:Static service:UserService.Current}}}"
-                                 Command="{ReflectionBinding Path=ShowWindow,Source={x:Static service:UserService.Current}}"
-                                 CommandParameter="ChangeBindPhoneNumber"/>
-              <ui:MenuFlyoutItem Text="{ReflectionBinding Path=Res.User_BindPhoneNum,Mode=OneWay,Source={x:Static resx:R.Current}}"
-                                 IsVisible="{ReflectionBinding Path=!HasPhoneNumber,Source={x:Static service:UserService.Current}}}"
-                                 Command="{ReflectionBinding Path=ShowWindow,Source={x:Static service:UserService.Current}}"
-                                 CommandParameter="BindPhoneNumber"/>
-              <ui:MenuFlyoutItem Text="{ReflectionBinding Path=Res.SignOut,Mode=OneWay,Source={x:Static resx:R.Current}}"
-                                 Command="{ReflectionBinding Path=SignOut,Source={x:Static service:UserService.Current}}"/>
-            </ui:MenuFlyout>
-          </ui:Button.Flyout>
-        </ui:Button>
-
-      </ui:NavigationView.PaneCustomContent>
+        <!-- 已移除「用户菜单」面板（PaneCustomContent）：
+             它整块绑定 UserService.Current（头像、昵称、刷新头像、资料、绑定/换绑手机号、退出登录），
+             账号体系已随「仅保留 Steam/GitHub 加速」一并删除。
+             MainWindowViewModel 中对应的 IsOpenUserMenu / OpenUserMenu 也已移除。 -->
 
       <ui:NavigationView.MenuItemTemplate>
         <DataTemplate DataType="{x:Type vm:TabItemViewModel}">

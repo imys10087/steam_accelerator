@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
@@ -182,14 +182,6 @@
       <Link>Steam++.VisualElementsManifest.xml</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="..\ST.Client.Desktop.Avalonia.App.Bridge.Package\Images\Square44x44Logo.scale-400.png">
-      <Link>Assets\SteamPlusPlus.70x70.png</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="..\ST.Client.Desktop.Avalonia.App.Bridge.Package\Images\Square150x150Logo.scale-400.png">
-      <Link>Assets\SteamPlusPlus.150x150.png</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
 
   <!--AppSettings namespacePrefix = "System.Application.UI.Resources."-->
@@ -208,4 +200,5 @@
   <ItemGroup Condition="'$(Configuration)'=='Release' And Exists('$(MSBuildProjectDirectory)\..\..\rsa-public-key-release.pfx')">
     <EmbeddedResource Include="..\..\rsa-public-key-release.pfx" Link="Resources\E88CA4F9" />
   </ItemGroup>
-</Project>
+</Project>  <!-- 已移除对 ST.Client.Desktop.Avalonia.App.Bridge.Package 的磁贴图片引用：
+       该 UWP/MSIX 桥接工程已随无关功能裁剪，磁贴配置仅有 Windows Store 打包时才需要。 -->

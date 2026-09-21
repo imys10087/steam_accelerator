@@ -53,14 +53,8 @@ namespace System.Application.Converters
             {
                 return GetBitmap(clipStream);
             }
-            else if (value is Guid imageid)
-            {
-                if (Guid.Empty == imageid)
-                {
-                    return null;
-                }
-                return DownloadImage(ImageUrlHelper.GetImageApiUrlById(imageid), width);
-            }
+            // 已移除 Guid(ImageId) 分支：它依赖 ImageUrlHelper 拼装服务端图片接口地址，
+            // 该图片通道随「加速项目图标」一并裁剪。
             return BindingOperations.DoNothing;
         }
     }

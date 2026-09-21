@@ -1,4 +1,4 @@
-using System.Application.Services;
+﻿using System.Application.Services;
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Threading.Tasks;
@@ -144,50 +144,10 @@ namespace System.Application.UI
                 });
                 rootCommand.AddCommand(common);
 
-                // -clt steam -account
-                var steamuser = new Command("steam", "Steam相关操作");
-                steamuser.AddOption(new Option<string>("-account", "指定对应steam用户名"));
-                steamuser.Handler = CommandHandler.Create((string account) =>
-                {
-                    if (!string.IsNullOrEmpty(account))
-                    {
-                        Startup.Init(DILevel.Steam);
-                        ISteamService.Instance.TryKillSteamProcess();
-                        ISteamService.Instance.SetCurrentUser(account);
-                        ISteamService.Instance.StartSteam();
-                    }
-                });
-                rootCommand.AddCommand(steamuser);
+                // 已移除 `-clt steam -account` 子命令：Steam 账号切换（ISteamService）随账号模块裁剪。
 
-                // -clt app -id 632360
-                var unlock_achievement = new Command("app", "打开成就解锁窗口");
-                unlock_achievement.AddOption(new Option<int>("-id", "指定一个Steam游戏Id"));
-                unlock_achievement.AddOption(new Option<bool>("-silence", "挂运行服务，不加载窗口，内存占用更小"));
-                unlock_achievement.Handler = CommandHandler.Create(async (int id, bool silence) =>
-                {
-                    try
-                    {
-                        if (id <= 0) return;
-                        if (!silence)
-                        {
-                            Startup.Init(DILevel.GUI | DILevel.Steam | DILevel.HttpClientFactory);
-                            IViewModelManager.Instance.InitUnlockAchievement(id);
-                            BuildAvaloniaAppAndStartWithClassicDesktopLifetime(args);
-                        }
-                        else
-                        {
-                            Startup.Init(DILevel.Steam);
-                            SteamConnectService.Current.Initialize(id);
-                            TaskCompletionSource tcs = new();
-                            await tcs.Task;
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Log.Error(nameof(unlock_achievement), ex, "Start");
-                    }
-                });
-                rootCommand.AddCommand(unlock_achievement);
+                // 已移除 `-clt app -id` 子命令：成就解锁（SteamConnectService / IViewModelManager.InitUnlockAchievement）
+                // 随成就模块裁剪。
 
                 var r = rootCommand.InvokeAsync(args).Result;
                 return r;

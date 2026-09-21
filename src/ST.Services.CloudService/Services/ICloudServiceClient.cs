@@ -1,3 +1,4 @@
+using System.Application.Models;
 using System.Application.Services.CloudService.Clients.Abstractions;
 using System.Threading;
 using System.Threading.Tasks;

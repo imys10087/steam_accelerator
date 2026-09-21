@@ -1,7 +1,10 @@
 using System.Application.Models;
+using System.Collections.Generic;
 using System.IO;
 using System.Net;
+using System.Properties;
 using System.Threading.Tasks;
+using Titanium.Web.Proxy.Models;
 using Titanium.Web.Proxy.Network;
 
 namespace System.Application.Services
@@ -37,6 +40,7 @@ namespace System.Application.Services
         /// <summary>用于承接注入脚本与跨域转发的本地域名。</summary>
         const string LocalDomain = "local.steampp.net";
 
+        /// <summary>日志标签。实现类通过自己的常量别名引用它。</summary>
         const string TAG = "HttpProxyS";
 
         static IHttpProxyService Instance => DI.Get<IHttpProxyService>();

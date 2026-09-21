@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:System.Application.UI.ViewModels"
              xmlns:resx="using:System.Application.UI.Resx"
@@ -30,13 +30,7 @@
           </pages:Settings_General.DataContext>
         </pages:Settings_General>
       </TabItem>
-      <TabItem Header="{ReflectionBinding Path=Res.Settings_Steam,Mode=OneWay,Source={x:Static resx:R.Current}}">
-        <pages:Settings_Steam x:DataType="vm:SettingsPageViewModel" x:CompileBindings="True">
-          <pages:Settings_Steam.DataContext>
-            <vm:SettingsPageViewModel/>
-          </pages:Settings_Steam.DataContext>
-        </pages:Settings_Steam>
-      </TabItem>
+    <!-- 已移除「Steam」设置标签页（Settings_Steam）：Steam 本地读写/账号设置随对应模块裁剪。 -->
       <!--<TabItem Header="{ReflectionBinding Path=Res.Settings_Auth,Mode=OneWay,Source={x:Static resx:R.Current}}">
         </TabItem>-->
     </TabControl>

@@ -43,6 +43,9 @@ namespace System.Application.Services.Implementation
     /// </summary>
     sealed class HttpProxyServiceImpl : IHttpProxyService
     {
+        /// <summary>日志标签，取自接口常量（便于统一改名）。</summary>
+        const string TAG = IHttpProxyService.TAG;
+
         readonly IPlatformService platformService;
         readonly IDnsAnalysisService dnsAnalysis;
 

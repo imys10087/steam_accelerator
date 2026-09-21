@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -107,11 +107,6 @@
                      IsReadOnly="True"
                      MinWidth="10"
                      Text="{Binding VersionDisplay,Mode=OneTime}"/>
-            <Button Classes="Hyperlink"
-                    Content="{ReflectionBinding Path=Res.CheckUpdate,Source={x:Static resx:R.Current},Mode=OneWay}"
-                    Command="{Binding CheckUpdateCommand}"
-                    VerticalAlignment="Center"
-                    VerticalContentAlignment="Center"/>
             <Button Classes="Hyperlink"
                     Content="{ReflectionBinding Path=Res.About_UpdateLog,Mode=OneWay,Source={x:Static resx:R.Current}}"
                     Command="{Binding OpenBrowserCommand}"
@@ -352,19 +347,8 @@ Italian: Zhengye
         </Border>
       </Button>
 
-      <Button Classes="plain"
-              Command="{Binding DelAccountCommand}"
-              IsVisible="{ReflectionBinding Path=IsAuthenticated,Source={x:Static service:UserService.Current}}">
-        <Border Classes="Item">
-          <DockPanel>
-            <TextBlock Text="{ReflectionBinding Path=Res.DelAccount,Mode=OneWay,Source={x:Static resx:R.Current}}"/>
-
-            <ui:SymbolIcon Classes="right"
-                           Symbol="Open"
-                           FontSize="24"/>
-          </DockPanel>
-        </Border>
-      </Button>
+      <!-- 已移除「删除账号」入口（含分隔符）：账号体系已随「仅保留 Steam/GitHub 加速」一并裁剪，
+           DelAccountCommand 与 UserService.Current 均已不存在。 -->
 
       <TextBlock Classes="h7 light"
                  Margin="0 20"
@@ -383,11 +367,6 @@ Italian: Zhengye
                    IsReadOnly="True"
                    MinWidth="10"
                    Text="{Binding VersionDisplay,Mode=OneTime}"/>
-          <Button Classes="Hyperlink"
-                  Content="{ReflectionBinding Path=Res.CheckUpdate,Source={x:Static resx:R.Current},Mode=OneWay}"
-                  Command="{Binding CheckUpdateCommand}"
-                  VerticalAlignment="Center"
-                  VerticalContentAlignment="Center"/>
           <Button Classes="Hyperlink"
                   Content="{ReflectionBinding Path=Res.About_UpdateLog,Mode=OneWay,Source={x:Static resx:R.Current}}"
                   Command="{Binding OpenBrowserCommand}"
@@ -539,13 +518,6 @@ Italian: Zhengye
                       Content="{ReflectionBinding Path=Res.User_Privacy,Mode=OneWay,Source={x:Static resx:R.Current}}"
                       Command="{Binding OpenBrowserCommand}"
                       CommandParameter="{x:Static vm:AboutPageViewModel.PrivacyLink}">
-            </Button>
-            <TextBlock Classes="LinkSeparatorPadding" Text="-"
-                       IsVisible="{ReflectionBinding Path=IsAuthenticated,Source={x:Static service:UserService.Current}}" />
-            <Button Classes="Hyperlink"
-                      Content="{ReflectionBinding Path=Res.DelAccount,Mode=OneWay,Source={x:Static resx:R.Current}}"
-                      Command="{Binding DelAccountCommand}"
-                      IsVisible="{ReflectionBinding Path=IsAuthenticated,Source={x:Static service:UserService.Current}}">
             </Button>
           </StackPanel>
           <WrapPanel HorizontalAlignment="Center">

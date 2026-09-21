@@ -1,4 +1,4 @@
-#if !TRAY_INDEPENDENT_PROGRAM
+﻿#if !TRAY_INDEPENDENT_PROGRAM
 using Avalonia;
 using Avalonia.Platform;
 using Avalonia.Shared.PlatformSupport;
@@ -21,9 +21,22 @@ using Avalonia.Controls;
 
 namespace System.Application.UI
 {
-    /// <inheritdoc cref="INotificationService.NotifyIconHelper"/>
-    sealed class NotifyIconHelper : INotificationService.NotifyIconHelper
+    /// <summary>
+    /// 托盘图标承载与消息气泡显示。
+    ///
+    /// <para><b>裁剪说明</b></para>
+    /// <para>
+    /// 原来实现 <c>INotificationService.NotifyIconHelper</c>
+    /// （服务端公告/通知推送的托盘载体）。通知播报模块已随账号/运营功能一并裁剪，
+    /// 因此不再实现该接口，只保留加速工具自身需要的托盘图标能力
+    /// （<c>App.axaml.cs</c> 中的 <c>NotifyIconHelper.Init</c>）。
+    /// </para>
+    /// </summary>
+    sealed class NotifyIconHelper
     {
+        /// <summary>是否已完成初始化（原为 INotificationService.NotifyIconHelper 的成员，解耦后自带）。</summary>
+        public static bool IsInitialized { get; private set; }
+
         private NotifyIconHelper() => throw new NotSupportedException();
 
 #if !TRAY_INDEPENDENT_PROGRAM

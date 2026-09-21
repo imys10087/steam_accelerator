@@ -12,7 +12,6 @@ namespace System.Application.Services.Implementation
     internal sealed class ViewModelManager : ReactiveObject, IViewModelManager
     {
         MainWindowViewModel? mainWindow;
-        AchievementWindowViewModel? achievementWindow;
         TaskBarWindowViewModel? taskbarWindow;
         readonly CompositeDisposable compositeDisposable = new();
 
@@ -28,16 +27,10 @@ namespace System.Application.Services.Implementation
         {
             try
             {
-                if (appidUnlockAchievementHasValue)
-                {
-                    achievementWindow = new AchievementWindowViewModel(appidUnlockAchievement);
-                    mMainWindow = achievementWindow;
-                }
-                else
-                {
-                    mainWindow = new MainWindowViewModel();
-                    mMainWindow = mainWindow;
-                }
+                // 成就管理工作台（AchievementWindowViewModel）已随成就模块移除，
+                // 不再有「以成就窗口作为主窗口」的分支。
+                mainWindow = new MainWindowViewModel();
+                mMainWindow = mainWindow;
             }
             catch (Exception ex)
             {

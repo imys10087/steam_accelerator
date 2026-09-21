@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
@@ -194,26 +194,21 @@ namespace System.Application.UI
 #if StartupTrace
             StartupTrace.Restart("InitSettingSubscribe");
 #endif
-            switch (vmService.MainWindow)
+            // 已移除「以成就解锁窗口作为主窗口」的分支
+            // （AchievementWindowViewModel / AchievementWindow 已随成就模块裁剪）
             {
-                case AchievementWindowViewModel:
-                    Program.IsMinimize = false;
-                    MainWindow = new AchievementWindow();
-                    break;
-
-                default:
                     #region 主窗口启动时加载的资源
 #if !UI_DEMO
                     compositeDisposable.Add(SettingsHost.Save);
                     compositeDisposable.Add(ProxyService.Current.Dispose);
-                    compositeDisposable.Add(SteamConnectService.Current.Dispose);
-                    compositeDisposable.Add(ASFService.Current.StopASF);
+                    // 已移除: SteamConnectService.Current.Dispose（对应模块已裁剪）
+                    // 已移除: ASFService.Current.StopASF（对应模块已裁剪）
                     if (GeneralSettings.IsStartupAppMinimized.Value)
                         Program.IsMinimize = true;
 #endif
                     #endregion
                     MainWindow = new MainWindow();
-                    break;
+                    // （原 switch default 分支的 break 已随 switch 移除）
             }
 
             MainWindow.DataContext = vmService.MainWindow;
@@ -347,7 +342,7 @@ namespace System.Application.UI
             if (isOfficialChannelPackage)
             {
 #pragma warning disable CA1416 // 验证平台兼容性
-                VisualStudioAppCenterSDK.Init();
+                // 已移除 VisualStudioAppCenterSDK.Init()：App Center 遥测接入已裁剪
 #pragma warning restore CA1416 // 验证平台兼容性
             }
 #endif

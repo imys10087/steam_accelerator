@@ -1,4 +1,38 @@
-# Steam++ / GitHub 加速器精简重构报告
+﻿# Steam++ / GitHub 加速器精简重构报告
+
+> ## ✅ 编译验证结果（已完成）
+>
+> 已在本机免管理员安装 **.NET SDK 6.0.101**（`C://Users//yangy//.dotnet6`，与 `global.json` 钉死版本一致），
+> 拉取 5 个子模块，并完成完整构建：
+>
+> ```
+> dotnet build src/ST.Client.Desktop.Avalonia.App/ST.Client.Avalonia.App.csproj -c Debug
+> → BUILD_EXIT = 0，0 个错误，3 个警告
+> ```
+>
+> **验证覆盖范围**：`ST.Client`（加速内核 / 脚本管理 / 云服务模型）、`ST.Services.CloudService`（含重写后的
+> ApiConnection）、`ST.Client.Windows`（Windows 平台与 DPAPI）、`ST.Client.Avalonia`（UI 与全部 XAML，
+> 含 ViewLocator/页面模板）、`ST.Client.Avalonia.App`（组合根 Startup2 / Program / App / 命令行）。
+>
+> 验证过程中发现并修复了 40 余处问题，其中**属于本次重构自身引入的**包括：
+> 误删 netstandard2.1 的 `HttpContentCompat` 兼容层、若干缺失的 `using`、
+> `ProxyHostMatcher.Empty` 构造参数不匹配、`const HttpMethod` 非法常量、
+> `Task<IApiResponse<T>>` → `Task<IApiResponse>` 的协变缺失、
+> `LookupClient` 误用 `using`、接口 `TAG` 可见性。
+>
+> 另有一批**因裁剪而暴露的历史遗留问题**：`IProtectedData` 原本声明在已删除的令牌兼容层文件里
+> （已迁到 `src/ST.Client/Services/IProtectedData.cs`）、`WindowsProtectedData` 是通用 DPAPI 基础设施
+> （已恢复）、`ST.Client.Windows.csproj` 仍 `<Compile Include>` 指向已删工程等。
+>
+> ### 环境搭建过程中值得记录的两个坑
+> 1. **`nuget.config` 中的 `AvaloniaCI`（`nuget.avaloniaui.net`）已失效**，返回 HTTP 521，会导致
+>    `restore` 直接失败。需显式指定 `-p:RestoreSources=https://api.nuget.org/v3/index.json`。
+>    **建议把该源从 `nuget.config` 删除并显式加入 nuget.org。**
+> 2. **`references/reactive`（Rx.NET）使用 Nerdbank.GitVersioning，必须保留完整 git 历史**，
+>    浅克隆（`--depth 1`）会因无法回溯版本高度而构建失败；需 `git -C references/reactive fetch --unshallow`。
+>    另外 `reactive` 在 Windows 上需要 `git config core.longpaths true` 才能 checkout。
+>
+> 复现命令见第 8 章。
 
 > 目标仓库：`https://github.com/imys10087/steam_accelerator`（Watt Toolkit / Steam++ 的 fork，基线提交 `0286ed1`，2022-02）
 > 本次工作分支：`refactor/steam-github-accelerator-only`

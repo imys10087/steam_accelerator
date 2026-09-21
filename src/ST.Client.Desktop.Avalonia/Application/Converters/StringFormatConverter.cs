@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using SteamKit2;
 #if !__MOBILE__
 using Avalonia.Data.Converters;
 #else
@@ -31,15 +30,10 @@ namespace System.Application.Converters
                 }
                 else if (decimal.TryParse(str, out decimal d))
                 {
-                    if (parameter is ECurrencyCode c1)
-                    {
-                        return d.ToString("C", c1.GetCultureInfo());
-                    }
-                    else if (parameter is CurrencyCode c2)
-                    {
-                        return d.ToString("C", c2.GetCultureInfo());
-                    }
-                    else if (string.Equals(para, Money, StringComparison.OrdinalIgnoreCase))
+                    // 已移除 ECurrencyCode（SteamKit2）与 CurrencyCode 两个币种分支：
+                    // 二者分别依赖已裁掉的 SteamKit2 与 CurrencyCodeEnumExtensions，
+                    // 且只被已删除的「捐赠排行」页面使用。
+                    if (string.Equals(para, Money, StringComparison.OrdinalIgnoreCase))
                     {
                         return d.ToString("C", culture);
                     }

@@ -369,13 +369,9 @@ namespace System.Application.Services
 
             LoadOrSaveLocalAccelerate();
 
-            if (IsLoadImage && ProxyDomains.Items.Any_Nullable())
-            {
-                foreach (var item in ProxyDomains.Items)
-                {
-                    item.ImageStream = IHttpService.Instance.GetImageAsync(ImageUrlHelper.GetImageApiUrlById(item.ImageId), ImageChannelType.AccelerateGroup);
-                }
-            }
+            // 已移除加速项目组图标的预加载（ImageUrlHelper / ImageChannelType 随
+            // 「加速项目图标来自服务端图片接口」一并裁剪）。若后续需要图标，
+            // 可在此按 AccelerateProjectGroupDTO.ImageId 重新接入一个图片加载器。
 
             this.WhenAnyValue(v => v.ProxyDomainsList)
                   .Subscribe(domain => domain?

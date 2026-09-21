@@ -39,6 +39,22 @@ namespace System.Application.Services
         /// <summary>阿里公共 DNS（IPv4 备）。</summary>
         const string SecondaryDNS_Ali = "223.6.6.6";
 
+        // 以下常量仅用于「代理设置」界面的上游 DNS 下拉预设（纯字符串，不参与解析逻辑），
+        // 因此即便解析实现里不再使用对应服务器，也保留给用户选择。
+        const string PrimaryDNS_114 = "114.114.114.114";
+        const string SecondaryDNS_114 = "114.114.115.115";
+
+        const string PrimaryDNS_Dnspod = "119.29.29.29";
+        const string SecondaryDNS_Dnspod = "182.254.116.116";
+
+        const string PrimaryDNS_Baidu = "180.76.76.76";
+
+        const string PrimaryDNS_Google = "8.8.8.8";
+        const string SecondaryDNS_Google = "8.8.4.4";
+
+        const string PrimaryDNS_Cloudflare = "1.1.1.1";
+        const string SecondaryDNS_Cloudflare = "1.0.0.1";
+
         /// <summary>阿里公共 DNS 服务器组。</summary>
         protected static readonly IPAddress[] DNS_Alis =
         {

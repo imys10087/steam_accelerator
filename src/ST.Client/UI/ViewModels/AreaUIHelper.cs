@@ -1,4 +1,4 @@
-using ReactiveUI;
+﻿using ReactiveUI;
 using System.Application.Entities;
 using System.Application.Services;
 using System.Application.UI.Resx;
@@ -245,93 +245,5 @@ namespace System.Application.UI.ViewModels
         /// 第一级地区选项组
         /// </summary>
         public static IReadOnlyList<IArea> Group2 => mGroup2.Value;
-    }
-
-    partial class UserProfileWindowViewModel : AreaUIHelper.IViewModelField
-    {
-        IReadOnlyList<IArea>? _AreaItems2;
-        public IReadOnlyList<IArea>? AreaItems2
-        {
-            get => _AreaItems2;
-            set => this.RaiseAndSetIfChanged(ref _AreaItems2, value);
-        }
-
-        IReadOnlyList<IArea>? _AreaItems3;
-        public IReadOnlyList<IArea>? AreaItems3
-        {
-            get => _AreaItems3;
-            set => this.RaiseAndSetIfChanged(ref _AreaItems3, value);
-        }
-
-        IReadOnlyList<IArea>? _AreaItems4;
-        public IReadOnlyList<IArea>? AreaItems4
-        {
-            get => _AreaItems4;
-            set => this.RaiseAndSetIfChanged(ref _AreaItems4, value);
-        }
-
-        IArea? _AreaSelectItem2;
-        public IArea? AreaSelectItem2
-        {
-            get => _AreaSelectItem2;
-            set => this.RaiseAndSetIfChanged(ref _AreaSelectItem2, value);
-        }
-
-        IArea? _AreaSelectItem3;
-        public IArea? AreaSelectItem3
-        {
-            get => _AreaSelectItem3;
-            set => this.RaiseAndSetIfChanged(ref _AreaSelectItem3, value);
-        }
-
-        IArea? _AreaSelectItem4;
-        public IArea? AreaSelectItem4
-        {
-            get => _AreaSelectItem4;
-            set => this.RaiseAndSetIfChanged(ref _AreaSelectItem4, value);
-        }
-
-        bool _AreaNotVisible3;
-        public bool AreaNotVisible3
-        {
-            get => _AreaNotVisible3;
-            set => this.RaiseAndSetIfChanged(ref _AreaNotVisible3, value);
-        }
-
-        bool _AreaNotVisible4;
-        public bool AreaNotVisible4
-        {
-            get => _AreaNotVisible4;
-            set => this.RaiseAndSetIfChanged(ref _AreaNotVisible4, value);
-        }
-
-        IReadOnlyList<IArea>? AreaUIHelper.IViewModelField.MAreaItems3
-        {
-            set => _AreaItems3 = value;
-        }
-        IReadOnlyList<IArea>? AreaUIHelper.IViewModelField.MAreaItems4
-        {
-            set => _AreaItems4 = value;
-        }
-        IArea? AreaUIHelper.IViewModelField.MAreaSelectItem2
-        {
-            set => _AreaSelectItem2 = value;
-        }
-        IArea? AreaUIHelper.IViewModelField.MAreaSelectItem3
-        {
-            set => _AreaSelectItem3 = value;
-        }
-        IArea? AreaUIHelper.IViewModelField.MAreaSelectItem4
-        {
-            set => _AreaSelectItem4 = value;
-        }
-        bool AreaUIHelper.IViewModelField.MAreaNotVisible3
-        {
-            set => _AreaNotVisible3 = value;
-        }
-        bool AreaUIHelper.IViewModelField.MAreaNotVisible4
-        {
-            set => _AreaNotVisible4 = value;
-        }
     }
 }

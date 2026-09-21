@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:System.Application.UI.ViewModels"
              xmlns:resx="using:System.Application.UI.Resx"
@@ -29,9 +29,8 @@
              Header="{ReflectionBinding Path=Res.About_FAQ,Mode=OneWay,Source={x:Static resx:R.Current}}">
       <pages:About_FAQPage />
     </TabItem>-->
-      <TabItem Header="{ReflectionBinding Path=Res.About_Donate,Mode=OneWay,Source={x:Static resx:R.Current}}">
-        <pages:About_DonatePage />
-      </TabItem>
+      <!-- 已移除「捐赠」标签页（About_DonatePage）：该页数据来自 ICloudServiceClient.DonateRanking，
+           属运营侧功能，已随账号/运营模块一并裁剪。 -->
       <TabItem Header="{ReflectionBinding Path=Res.About_OpenSource,Mode=OneWay,Source={x:Static resx:R.Current}}">
         <pages:About_OpenSourcePage />
       </TabItem>

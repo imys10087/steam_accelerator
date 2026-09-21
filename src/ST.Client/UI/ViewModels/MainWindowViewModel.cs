@@ -30,36 +30,14 @@ namespace System.Application.UI.ViewModels
             set => this.RaiseAndSetIfChanged(ref _SelectedItem, value);
         }
 
-        bool _IsOpenUserMenu;
-        public bool IsOpenUserMenu
-        {
-            get => _IsOpenUserMenu;
-            set => this.RaiseAndSetIfChanged(ref _IsOpenUserMenu, value);
-        }
-
-        public ReactiveCommand<Unit, Unit>? OpenUserMenu { get; }
+        // 账号体系已随「仅保留 Steam/GitHub 加速」一并移除，
+        // 用户菜单的开关状态（IsOpenUserMenu）与命令（OpenUserMenu）已删除。
 
         #endregion
-
-        public StartPageViewModel StartPage => GetTabItemVM<StartPageViewModel>();
 
         public CommunityProxyPageViewModel CommunityProxyPage => GetTabItemVM<CommunityProxyPageViewModel>();
 
         public ProxyScriptManagePageViewModel ProxyScriptPage => GetTabItemVM<ProxyScriptManagePageViewModel>();
-
-        public SteamAccountPageViewModel SteamAccountPage => GetTabItemVM<SteamAccountPageViewModel>();
-
-        public GameListPageViewModel GameListPage => GetTabItemVM<GameListPageViewModel>();
-
-        public LocalAuthPageViewModel LocalAuthPage => GetTabItemVM<LocalAuthPageViewModel>();
-
-        public SteamIdlePageViewModel SteamIdlePage => GetTabItemVM<SteamIdlePageViewModel>();
-
-        public ArchiSteamFarmPlusPageViewModel ASFPage => GetTabItemVM<ArchiSteamFarmPlusPageViewModel>();
-
-        public GameRelatedPageViewModel GameRelatedPage => GetTabItemVM<GameRelatedPageViewModel>();
-
-        public OtherPlatformPageViewModel OtherPlatformPage => GetTabItemVM<OtherPlatformPageViewModel>();
 
         protected static readonly IPlatformService platformService = IPlatformService.Instance;
         public MainWindowViewModel()
@@ -73,54 +51,20 @@ namespace System.Application.UI.ViewModels
 #endif
                 Title = title;
 
-                IUserManager.Instance.OnSignOut += () =>
-                {
-                    IsOpenUserMenu = false;
-                };
-
-                OpenUserMenu = ReactiveCommand.Create(() =>
-                {
-                    IsOpenUserMenu = UserService.Current.IsAuthenticated;
-                    if (!IsOpenUserMenu)
-                    {
-                        UserService.Current.ShowWindow(CustomWindow.LoginOrRegister);
-                    }
-                });
             }
 
             #region InitTabItems
 
-
-            //AddTabItem<StartPageViewModel>();
+            // 只注册加速相关的两个页面：
+            //   CommunityProxyPage     —— 加速项目开关与运行状态
+            //   ProxyScriptManagePage  —— 代理脚本管理
+            // 其余页面（起始页/账号/成就/令牌/挂卡/游戏工具/调试）已随功能模块移除。
             AddTabItem<CommunityProxyPageViewModel>();
+
             if (IApplication.IsDesktopPlatform)
             {
                 AddTabItem<ProxyScriptManagePageViewModel>();
-                AddTabItem<SteamAccountPageViewModel>();
-                AddTabItem<GameListPageViewModel>();
             }
-            AddTabItem<LocalAuthPageViewModel>();
-            AddTabItem<ArchiSteamFarmPlusPageViewModel>();
-
-            //AddTabItem<SteamIdlePageViewModel>();
-#if !TRAY_INDEPENDENT_PROGRAM
-            if (OperatingSystem2.IsWindows)
-                AddTabItem<GameRelatedPageViewModel>();
-#endif
-            //AddTabItem<OtherPlatformPageViewModel>();
-
-#if !TRAY_INDEPENDENT_PROGRAM && DEBUG
-            if (IApplication.EnableDevtools && IApplication.IsDesktopPlatform)
-            {
-                AddTabItem<DebugPageViewModel>();
-                //FooterTabItems.Add(new DebugPageViewModel().AddTo(this));
-
-                //if (AppHelper.IsSystemWebViewAvailable)
-                //{
-                //    AddTabItem<DebugWebViewPageViewModel>();
-                //}
-            }
-#endif
 
             #endregion
 
@@ -145,16 +89,9 @@ namespace System.Application.UI.ViewModels
                     Task.Run(async () =>
                     {
                         await ProxyService.Current.Initialize();
-                        if (ASFSettings.AutoRunArchiSteamFarm.Value)
-                        {
-                            await ASFService.Current.InitASF();
-                        }
+                        // ASF 挂卡（ASFSettings.AutoRunArchiSteamFarm → ASFService）
+                        // 与 Steam 账号连接（SteamConnectService）已随对应模块移除。
                     });
-
-                    if (IApplication.IsDesktopPlatform)
-                    {
-                        SteamConnectService.Current.Initialize();
-                    }
 
                     Parallel.ForEach(TabItems, item =>
                     {

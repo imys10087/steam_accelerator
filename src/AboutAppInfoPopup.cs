@@ -142,9 +142,7 @@ namespace System.Application.UI
                 b.AppendLine();
 #endif
 
-                b.Append("[app.updcha] ");
-                b.Append(ApplicationUpdateServiceBaseImpl.UpdateChannelType);
-                b.AppendLine();
+                // 已移除 [app.updcha] 输出：应用更新服务（ApplicationUpdateServiceBaseImpl）随更新模块裁剪。
 
                 b.Append("[app.install] ");
                 b.Append(platformService.IsInstall);

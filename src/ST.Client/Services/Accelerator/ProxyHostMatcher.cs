@@ -1,4 +1,5 @@
 using System;
+using System.Application.Models;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
@@ -26,7 +27,10 @@ namespace System.Application.Services.Accelerator
     public sealed class ProxyHostMatcher
     {
         /// <summary>不含任何规则的匹配器，用于替代 <see langword="null"/> 判断以减少分支。</summary>
-        public static readonly ProxyHostMatcher Empty = new(Array.Empty<HostRule>(), Array.Empty<UriRule>());
+        public static readonly ProxyHostMatcher Empty = new(
+            new Dictionary<string, HostRule>(StringComparer.Ordinal),
+            Array.Empty<HostRule>(),
+            Array.Empty<UriRule>());
 
         /// <summary>规则条目。</summary>
         public readonly struct HostRule
