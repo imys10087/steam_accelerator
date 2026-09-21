@@ -175,15 +175,31 @@ namespace System.Application
 
                 static void SetApiBaseUrl(AppSettings s)
                 {
-                    // 非官方渠道包（含本地 Debug 构建与二次分发）使用开发用接口地址。
-                    // 注意：官方渠道包判定已简化为仅校验程序集公钥，不再依赖内嵌的
-                    // aes-key.pfx / rsa-public-key.pfx，因此普通 fork 可直接构建运行。
-                    s.ApiBaseUrl = (_ThisAssembly.Debuggable || !s.GetIsOfficialChannelPackage())
-                        ? Prefix_HTTPS + "pan.mossimo.net:8862"
-                        : Prefix_HTTPS + "api.steampp.net";
+                    // ── 加速接口基地址 ───────────────────────────────────────────
+                    // 上游原实现按「是否官方渠道包 / 是否 Debug 构建」二选一：
+                    //   官方发布版 → https://api.steampp.net
+                    //   其余（含本地 Debug）→ https://pan.mossimo.net:8862
+                    // 后者是上游作者的内网开发服务器，公网不可达。
+                    //
+                    // 后果：本地 Debug 构建启动后 API 全部超时，加速项目列表拉不回来，
+                    // 运行期表现为「加速项目 0 个，匹配规则 0 条」，也就是加速完全不生效。
+                    //（实测日志：ApiConn Fail(1006)，Url：api/Accelerate/All）
+                    //
+                    // 本项目为自用构建，因此一律使用公网可用的官方匿名接口；
+                    // 如需指向自建后端，设置环境变量 STEAMPP_API_BASE_URL 即可，无需重新编译。
+                    var fromEnv = Environment.GetEnvironmentVariable(ApiBaseUrlEnvironmentVariable);
+                    s.ApiBaseUrl = string.IsNullOrWhiteSpace(fromEnv)
+                        ? DefaultApiBaseUrl
+                        : fromEnv.Trim().TrimEnd('/');
                 }
             }
         }
+
+        /// <summary>默认加速接口基地址（官方匿名接口，无需登录）。</summary>
+        public const string DefaultApiBaseUrl = Prefix_HTTPS + "api.steampp.net";
+
+        /// <summary>覆盖加速接口基地址的环境变量名（指向自建后端时使用）。</summary>
+        public const string ApiBaseUrlEnvironmentVariable = "STEAMPP_API_BASE_URL";
 
         /// <summary>主进程启动后的收尾工作。</summary>
         public static void OnStartup(bool isMainProcess)
