@@ -304,8 +304,17 @@ namespace System.Application.Services.Implementation
                     httpsPort = 443;
                 }
 
+                // ★ 这里刻意「不」订阅 BeforeSslAuthenticate。
+                //
+                // 上游原实现同样把该订阅注释掉了
+                // （见 origin/main 中 TransparentProxyEndPoint_BeforeSslAuthenticate 的挂载处）。
+                // 透明端点靠构造函数传入的 decryptSsl: true 无条件解密，
+                // 再由 BeforeRequest 决定是否把上游改写到加速节点。
+                //
+                // 本次重构曾一度启用该订阅，导致「是否解密」取决于域名匹配结果：
+                // 只要匹配出现任何偏差，就退化为「不解密 → 不拦截 → 仍连原始（被墙）地址」，
+                // 表现为加速完全失效。此处恢复上游行为。
                 var https = new TransparentProxyEndPoint(ProxyIp, httpsPort, true);
-                https.BeforeSslAuthenticate += OnBeforeSslAuthenticate;
                 AddEndPoint(https);
 
                 if (!OperatingSystem2.IsLinux && !PortInUse(80))
@@ -510,15 +519,22 @@ namespace System.Application.Services.Implementation
         #region 代理事件
 
         /// <summary>
-        /// 透明代理模式：决定哪些 SNI 需要解密以便改写。
+        /// 透明代理模式下的 SNI 预判回调 —— <b>当前未被订阅，保留仅供排查参考</b>。
+        ///
+        /// <para>
+        /// 上游把它的挂载注释掉了，原因是：透明端点已用 decryptSsl: true 无条件解密，
+        /// 若再按域名匹配结果决定 <c>DecryptSsl</c>，匹配偏差会直接导致「不解密 → 不加速」。
+        /// 保留方法体是为了将来若要重新启用，能一眼看到正确做法（匹配成功才赋值，
+        /// 且不应把未匹配的请求置为 <c>DecryptSsl = false</c>）。
+        /// </para>
         /// </summary>
         Task OnBeforeSslAuthenticate(object sender, BeforeSslAuthenticateEventArgs e)
         {
-            e.DecryptSsl = false;
+            // 注意：不要 e.DecryptSsl = false —— 会让未命中的请求彻底失去加速机会
+            e.DecryptSsl = true;
 
             if (e.SniHostName.Contains(IHttpProxyService.LocalDomain, StringComparison.OrdinalIgnoreCase))
             {
-                e.DecryptSsl = true;
                 return Task.CompletedTask;
             }
 
@@ -526,7 +542,6 @@ namespace System.Application.Services.Implementation
             {
                 e.ForwardHttpsHostName = project.ServerName;
                 e.ForwardHttpsPort = project.PortId;
-                e.DecryptSsl = true;
             }
 
             return Task.CompletedTask;

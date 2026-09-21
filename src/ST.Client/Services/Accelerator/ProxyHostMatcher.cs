@@ -100,16 +100,46 @@ namespace System.Application.Services.Accelerator
 
                     var value = raw.Trim();
 
-                    // 规则里出现 Scheme / 路径 / 通配符 / 端口，说明它不是纯主机名
-                    if (value.Contains('/') ||
-                        value.Contains('*') ||
-                        value.Contains(':'))
+                    // ── 规则分类 ──────────────────────────────────────────────
+                    // 目标：任何「能表达出主机名」的规则都要落到主机索引上，
+                    // 因为请求热路径与 SNI 预判都只有主机名可用。
+                    // 早期版本把「含 : 或 *」的规则一律丢进 URI 规则表，
+                    // 导致它们在 SNI 路径上永远无法命中 —— 这会让加速静默失效。
+
+                    // 1) 含路径或完整的 scheme（如 https://github.com/xxx、github.com/abc）
+                    //    只能按完整 URI 匹配
+                    if (value.Contains('/'))
                     {
                         uri.Add(new UriRule(value, project));
                         continue;
                     }
 
-                    var host = value.ToLowerInvariant();
+                    // 2) 形如 *.github.com：语义为「子域」，按后缀规则处理
+                    if (value.StartsWith("*.", StringComparison.Ordinal))
+                    {
+                        var sub = value[2..].ToLowerInvariant();
+                        if (sub.Length == 0) continue;
+                        suffix.Add(new HostRule(sub, project));
+                        continue;
+                    }
+
+                    // 3) 其余含通配符的形态无法静态展开，只能退化为 URI 子串匹配
+                    if (value.Contains('*'))
+                    {
+                        uri.Add(new UriRule(value, project));
+                        continue;
+                    }
+
+                    // 4) 形如 github.com:443：剥掉端口，按主机名处理
+                    var hostPart = value;
+                    var colon = hostPart.IndexOf(':');
+                    if (colon >= 0)
+                    {
+                        hostPart = hostPart[..colon];
+                        if (hostPart.Length == 0) continue;
+                    }
+
+                    var host = hostPart.ToLowerInvariant();
 
                     if (host.StartsWith(".", StringComparison.Ordinal))
                     {
