@@ -63,7 +63,7 @@ namespace System.Application.Services
                         {
                             httpProxyService.IsOnlyWorkSteamBrowser = ProxySettings.IsOnlyWorkSteamBrowser.Value;
                             httpProxyService.IsSystemProxy = ProxySettings.EnableWindowsProxy.Value;
-                            httpProxyService.IsProxyGOG = ProxySettings.IsProxyGOG.Value;
+                            // GOG 平台 PEM 注入已随「其他平台反代」一并移除，此处不再赋值。
                         }
                         else
                         {

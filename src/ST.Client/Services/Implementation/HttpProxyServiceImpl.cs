@@ -1,19 +1,10 @@
 using System.Application.Models;
-using System.Application.Properties;
-using System.Application.UI.Resx;
+using System.Application.Services.Accelerator;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Net;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Net.NetworkInformation;
 using System.Net.Sockets;
-using System.Properties;
-using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -21,19 +12,91 @@ using Titanium.Web.Proxy;
 using Titanium.Web.Proxy.EventArguments;
 using Titanium.Web.Proxy.Models;
 using Titanium.Web.Proxy.Network;
-using static System.Application.Services.IHttpProxyService;
 
 namespace System.Application.Services.Implementation
 {
+    /// <summary>
+    /// 本地反向代理服务实现（加速核心的编排层）。
+    ///
+    /// <para><b>重构说明</b></para>
+    /// <para>
+    /// 原始实现是一个 800+ 行的类，把「证书管理」「请求改写」「脚本注入」「DNS 解析」
+    /// 「端点构建」「生命周期」全部混在一起。重构后本类只负责<b>编排</b>，
+    /// 具体职责下沉到 <c>System.Application.Services.Accelerator</c> 命名空间下的专用类型：
+    /// </para>
+    /// <list type="bullet">
+    /// <item><see cref="ProxyHostMatcher"/>：域名匹配（取代 O(项目 × 域名) 线性扫描）；</item>
+    /// <item><see cref="ProxyDnsCache"/>：带 TTL 与单飞合并的 DNS 缓存；</item>
+    /// <item><see cref="ProxyCertificateManager"/>：根证书创建/信任/删除；</item>
+    /// <item><see cref="ProxyRequestInterceptor"/>：请求改写与上游路由；</item>
+    /// <item><see cref="ProxyScriptInjector"/>：脚本注入；</item>
+    /// <item><see cref="ProxyRuntimeSettings"/>：不可变运行期设置快照。</item>
+    /// </list>
+    ///
+    /// <para><b>已修复的缺陷（摘要）</b></para>
+    /// <list type="bullet">
+    /// <item>反复「启动/停止」代理会累积未注销的端点事件处理器 → 现在停止时显式解绑并释放端点引用；</item>
+    /// <item><c>IsIpv6Support</c> 曾是 <see langword="static"/> 可变字段，存在启动线程与请求线程之间的数据竞争 → 现在通过不可变快照发布；</item>
+    /// <item>每个请求都做一次 DNS 查询 → 现在走 TTL 缓存 + 并发合并；</item>
+    /// <item>非 DEBUG 构建下证书异常被 <c>catch { }</c> 静默吞掉 → 现在统一记录日志。</item>
+    /// </list>
+    /// </summary>
     sealed class HttpProxyServiceImpl : IHttpProxyService
     {
         readonly IPlatformService platformService;
+        readonly IDnsAnalysisService dnsAnalysis;
 
         readonly ProxyServer proxyServer = new();
+        readonly ProxyCertificateManager certificateManager;
 
-        IDnsAnalysisService DnsAnalysis { get; }
+        readonly ProxyDnsCache dnsCache;
+        readonly ProxyRequestInterceptor requestInterceptor;
+        readonly ProxyScriptInjector scriptInjector;
 
-        public bool IsCertificate => proxyServer.CertificateManager == null || proxyServer.CertificateManager.RootCertificate == null;
+        /// <summary>当前运行期设置快照。请求线程只读取一次；启动代理时整体替换。</summary>
+        volatile ProxyRuntimeSettings runtimeSettings = ProxyRuntimeSettings.Disabled;
+
+        /// <summary>当前已挂载的端点，用于停止时解绑事件并释放引用。</summary>
+        readonly List<ProxyEndPoint> activeEndPoints = new();
+
+        ExplicitProxyEndPoint? explicitProxyEndPoint;
+
+        bool disposed;
+
+        public HttpProxyServiceImpl(IPlatformService platformService, IDnsAnalysisService dnsAnalysis)
+        {
+            this.platformService = platformService;
+            this.dnsAnalysis = dnsAnalysis;
+
+            certificateManager = new ProxyCertificateManager(proxyServer, platformService);
+
+            dnsCache = new ProxyDnsCache(ResolveCoreAsync);
+
+            requestInterceptor = new ProxyRequestInterceptor(
+                () => runtimeSettings,
+                ResolveUpstreamAsync);
+
+            scriptInjector = new ProxyScriptInjector(() => runtimeSettings);
+
+            proxyServer.ExceptionFunc = exception => Log.Error(TAG, exception, "ProxyServer ExceptionFunc");
+
+            // 固定这些与功能/内存/稳定性直接相关的开关，避免依赖库默认值随版本漂移
+            proxyServer.EnableHttp2 = true;
+            proxyServer.EnableConnectionPool = true;
+            proxyServer.CheckCertificateRevocation = X509RevocationMode.NoCheck;
+
+            var certManager = proxyServer.CertificateManager;
+            certManager.CertificateEngine = CertificateEngine;
+            certManager.PfxFilePath = ((IHttpProxyService)this).PfxFilePath;
+            certManager.RootCertificateIssuerName = IHttpProxyService.RootCertificateIssuerName;
+            certManager.RootCertificateName = IHttpProxyService.RootCertificateName;
+            // macOS / iOS 对根证书有效期上限为 825 天，这里取更保守的 300 天
+            certManager.CertificateValidDays = 300;
+
+            certManager.RootCertificate = certManager.LoadRootCertificate();
+        }
+
+        #region 加速输入
 
         public IReadOnlyCollection<AccelerateProjectDTO>? ProxyDomains { get; set; }
 
@@ -43,6 +106,12 @@ namespace System.Application.Services.Implementation
 
         public bool IsOnlyWorkSteamBrowser { get; set; }
 
+        public bool OnlyEnableProxyScript { get; set; }
+
+        #endregion
+
+        #region 监听参数
+
         public CertificateEngine CertificateEngine { get; set; } = CertificateEngine.BouncyCastle;
 
         public int ProxyPort { get; set; } = 26501;
@@ -51,9 +120,9 @@ namespace System.Application.Services.Implementation
 
         public bool IsSystemProxy { get; set; }
 
-        public bool IsProxyGOG { get; set; }
+        #endregion
 
-        public bool OnlyEnableProxyScript { get; set; }
+        #region 可选通道
 
         public bool Socks5ProxyEnable { get; set; }
 
@@ -61,8 +130,7 @@ namespace System.Application.Services.Implementation
 
         public bool TwoLevelAgentEnable { get; set; }
 
-        public ExternalProxyType TwoLevelAgentProxyType { get; set; }
-            = DefaultTwoLevelAgentProxyType;
+        public ExternalProxyType TwoLevelAgentProxyType { get; set; } = IHttpProxyService.DefaultTwoLevelAgentProxyType;
 
         public string? TwoLevelAgentIp { get; set; }
 
@@ -74,644 +142,82 @@ namespace System.Application.Services.Implementation
 
         public IPAddress? ProxyDNS { get; set; }
 
+        #endregion
+
         public bool ProxyRunning => proxyServer.ProxyRunning;
 
-        public static IList<HttpHeader> JsHeader => new List<HttpHeader>() { new HttpHeader("Content-Type", "text/javascript;charset=UTF-8") };
+        #region 证书
 
-        private static bool IsIpv6Support = false;
-        bool disposedValue;
+        public bool SetupCertificate() => certificateManager.SetupCertificate();
 
-        public HttpProxyServiceImpl(IPlatformService platformService, IDnsAnalysisService dnsAnalysis)
-        {
-            this.platformService = platformService;
-            DnsAnalysis = dnsAnalysis;
-            //if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            //    proxyServer.CertificateManager.CertificateEngine = CertificateEngine.DefaultWindows;
-            //else
-            proxyServer.ExceptionFunc = exception =>
-            {
-                Log.Error(TAG, exception, "ProxyServer ExceptionFunc");
-            };
+        public bool DeleteCertificate() => certificateManager.DeleteCertificate();
 
-            proxyServer.EnableHttp2 = true;
-            proxyServer.EnableConnectionPool = true;
-            proxyServer.CheckCertificateRevocation = X509RevocationMode.NoCheck;
-            // 可选地设置证书引擎
-            proxyServer.CertificateManager.CertificateEngine = CertificateEngine;
-            //proxyServer.CertificateManager.PfxPassword = $"{CertificateName}";
-            //proxyServer.ThreadPoolWorkerThread = Environment.ProcessorCount * 8;
-            proxyServer.CertificateManager.PfxFilePath = ((IHttpProxyService)this).PfxFilePath;
-            proxyServer.CertificateManager.RootCertificateIssuerName = RootCertificateIssuerName;
-            proxyServer.CertificateManager.RootCertificateName = RootCertificateName;
-            //mac和ios的证书信任时间不能超过300天
-            proxyServer.CertificateManager.CertificateValidDays = 300;
-            //proxyServer.CertificateManager.SaveFakeCertificates = true;
+        public void TrustCer() => certificateManager.TrustCer();
 
-            proxyServer.CertificateManager.RootCertificate = proxyServer.CertificateManager.LoadRootCertificate();
-        }
+        public bool IsCertificateInstalled(X509Certificate2? certificate2)
+            => ProxyCertificateManager.IsCertificateInstalled(certificate2);
 
-        private static async Task HttpRequest(SessionEventArgs e)
-        {
-            //IHttpService.Instance.SendAsync<object>();
-            var url = Web.HttpUtility.UrlDecode(e.HttpClient.Request.RequestUri.Query.Replace("?request=", ""));
-            var cookie = e.HttpClient.Request.Headers.GetFirstHeader("cookie-steamTool")?.Value ??
-                e.HttpClient.Request.Headers.GetFirstHeader("Cookie")?.Value;
-            var headrs = new List<HttpHeader>() {
-                new HttpHeader("Access-Control-Allow-Origin", e.HttpClient.Request.Headers.GetFirstHeader("Origin")?.Value ?? "*"),
-                new HttpHeader("Access-Control-Allow-Headers", "*"), new HttpHeader("Access-Control-Allow-Methods", "*"),
-                new HttpHeader("Access-Control-Allow-Credentials", "true")
-            };
-            //if (cookie != null)
-            //    headrs.Add(new HttpHeader("Cookie", cookie));
-            if (e.HttpClient.Request.ContentType != null)
-                headrs.Add(new HttpHeader("Content-Type", e.HttpClient.Request.ContentType));
-            switch (e.HttpClient.Request.Method.ToUpperInvariant())
-            {
-                case "GET":
-                    var body = await IHttpService.Instance.GetAsync<string>(url, cookie: cookie);
-                    e.Ok(body ?? "500", headrs);
-                    return;
-                case "POST":
-                    try
-                    {
-                        if (e.HttpClient.Request.ContentLength > 0)
-                        {
-                            var conext = await IHttpService.Instance.SendAsync<string>(url, () =>
-                            {
-                                using var sw = new MemoryStream().GetWriter(leaveOpen: true);
-                                sw.Write(e.HttpClient.Request.BodyString);
-                                var req = new HttpRequestMessage
-                                {
-                                    Method = HttpMethod.Post,
-                                    Content = new StreamContent(sw.BaseStream),
-                                };
-                                req.Content.Headers.ContentType = MediaTypeHeaderValue.Parse(e.HttpClient.Request.ContentType);
-                                req.Content.Headers.ContentLength = e.HttpClient.Request.BodyString.Length;
-                                return req;
-                            }, null/*, false*/, default);
-                            e.Ok(conext ?? "500", headrs);
-                        }
-                        else
-                        {
-                            e.Ok("500", headrs);
-                        }
-                    }
-                    catch (Exception error)
-                    {
-                        e.Ok(error.Message ?? "500", headrs);
-                    }
-                    return;
-            }
-            //e.Ok(respone, new List<HttpHeader>() { new HttpHeader("Access-Control-Allow-Origin", e.HttpClient.Request.Headers.GetFirstHeader("Origin")?.Value ?? "*") });
-        }
+        #endregion
 
-        private async Task<IPAddress?> GetReverseProxyIp(string url, IPAddress? proxyDns, bool isDomain = false)
-        {
-            if (isDomain || !IPAddress.TryParse(url, out var ip))
-            {
-                if (proxyDns != null)
-                {
-                    ip = (await DnsAnalysis.AnalysisDomainIpByCustomDns(url, new[] { proxyDns }, IsIpv6Support))?.First();
-                }
-                else
-                {
-                    if (!OperatingSystem2.IsWindows && !IsSystemProxy)
-                    {
-                        //非windows环境hosts加速下不能使用系统默认DNS解析代理，会解析到hosts上无限循环
-                        ip = (await DnsAnalysis.AnalysisDomainIpByAliDns(url, IsIpv6Support))?.First();
-                    }
-                    else
-                    {
-                        ip = (await DnsAnalysis.AnalysisDomainIp(url, IsIpv6Support))?.First();
-                    }
-                }
-            }
-            return ip;
-        }
-
-        private async Task OnRequest(object sender, SessionEventArgs e)
-        {
-#if DEBUG
-            Debug.WriteLine("OnRequest " + e.HttpClient.Request.RequestUri.AbsoluteUri);
-            Debug.WriteLine("OnRequest HTTP " + e.HttpClient.Request.HttpVersion);
-            Debug.WriteLine("ClientRemoteEndPoint " + e.ClientRemoteEndPoint.ToString());
-#endif
-            if (e.HttpClient.Request.Host == null) return;
-
-            if (e.HttpClient.Request.Host.Contains(LocalDomain, StringComparison.OrdinalIgnoreCase))
-            {
-                if (e.HttpClient.Request.Method.ToUpperInvariant() == "OPTIONS")
-                {
-                    e.Ok("", new List<HttpHeader>() {
-                        new HttpHeader("Access-Control-Allow-Origin", e.HttpClient.Request.Headers.GetFirstHeader("Origin")?.Value ?? "*"),
-                        new HttpHeader("Access-Control-Allow-Headers", "*"),
-                        new HttpHeader("Access-Control-Allow-Methods", "*"),
-                        new HttpHeader("Access-Control-Allow-Credentials", "true") });
-                    return;
-                }
-                var type = e.HttpClient.Request.Headers.GetFirstHeader("requestType")?.Value;
-                switch (type)
-                {
-                    case "xhr":
-                        await HttpRequest(e);
-                        return;
-                    default:
-                        e.Ok(Scripts?.FirstOrDefault(x => x.JsPathUrl == e.HttpClient.Request.RequestUri.LocalPath)?.Content ?? "404", JsHeader);
-                        return;
-                }
-            }
-
-            if (ProxyDomains is null || TwoLevelAgentEnable || OnlyEnableProxyScript) return;
-
-            //var item = ProxyDomains.FirstOrDefault(f => f.DomainNamesArray.Any(h => e.HttpClient.Request.RequestUri.AbsoluteUri.Contains(h, StringComparison.OrdinalIgnoreCase)));
-
-            //if (item != null)
-            //{
-            foreach (var item in ProxyDomains)
-            {
-                foreach (var host in item.DomainNamesArray)
-                {
-                    if (e.HttpClient.Request.RequestUri.AbsoluteUri.Contains(host, StringComparison.OrdinalIgnoreCase))
-                    {
-                        if (e.HttpClient.Request.RequestUri.Scheme.Equals("http", StringComparison.OrdinalIgnoreCase))
-                        {
-                            e.HttpClient.Request.RequestUri = new Uri(e.HttpClient.Request.RequestUri.AbsoluteUri.Remove(0, 4).Insert(0, "https"));
-                            //e.Redirect(e.HttpClient.Request.RequestUri.AbsoluteUri.Remove(0, 4).Insert(0, "https"));
-                            //return;
-                        }
-
-                        if (item.Redirect)
-                        {
-                            var url = item.ForwardDomainName.Replace("{path}", e.HttpClient.Request.RequestUri.AbsolutePath);
-                            url = url.Replace("{args}", e.HttpClient.Request.RequestUri.Query);
-                            //url = url.Replace("{url}", e.HttpClient.Request.RequestUri.AbsoluteUri);
-                            if (Browser2.IsHttpUrl(url))
-                            {
-                                e.HttpClient.Request.RequestUri = new Uri(e.HttpClient.Request.RequestUri.AbsoluteUri.Replace(e.HttpClient.Request.RequestUri.Scheme + "://" + e.HttpClient.Request.RequestUri.Host, url));
-                                //e.Redirect(e.HttpClient.Request.RequestUri.AbsoluteUri.Replace(e.HttpClient.Request.RequestUri.Scheme + "://" + e.HttpClient.Request.RequestUri.Host, url));
-                                return;
-                            }
-                            e.HttpClient.Request.RequestUri = new Uri(e.HttpClient.Request.RequestUri.AbsoluteUri.Replace(e.HttpClient.Request.RequestUri.Host, url));
-                            //e.Redirect(e.HttpClient.Request.RequestUri.AbsoluteUri.Replace(e.HttpClient.Request.RequestUri.Host, url));
-                            return;
-                        }
-
-                        if (e.HttpClient.UpStreamEndPoint == null)
-                        {
-                            var addres = item.ForwardDomainIsNameOrIP ? item.ForwardDomainName : item.ForwardDomainIP;
-                            var ip = await GetReverseProxyIp(addres, ProxyDNS, item.ForwardDomainIsNameOrIP);
-                            if (ip == null || IPAddress.IsLoopback(ip) || ip.Equals(IPAddress.Any))
-                                goto exit;
-                            e.HttpClient.UpStreamEndPoint = new IPEndPoint(ip, item.PortId);
-                        }
-
-                        if (e.HttpClient.ConnectRequest?.ClientHelloInfo?.Extensions != null)
-                        {
-#if DEBUG
-                            //Logger.Info("ClientHelloInfo Info: " + e.HttpClient.ConnectRequest.ClientHelloInfo);
-                            Debug.WriteLine("ClientHelloInfo Info: " + e.HttpClient.ConnectRequest.ClientHelloInfo);
-#endif
-                            if (!string.IsNullOrEmpty(item.ServerName))
-                            {
-                                var sni = e.HttpClient.ConnectRequest.ClientHelloInfo.Extensions["server_name"];
-                                e.HttpClient.ConnectRequest.ClientHelloInfo.Extensions["server_name"] =
-                                    new Titanium.Web.Proxy.StreamExtended.Models.SslExtension(sni.Value, sni.Name, item.ServerName, sni.Position);
-                            }
-                            else
-                            {
-                                e.HttpClient.ConnectRequest.ClientHelloInfo.Extensions.Remove("server_name");
-                            }
-                        }
-                        return;
-                    }
-                }
-            }
-        //}
-
-        exit:
-            //部分运营商将奇怪的域名解析到127.0.0.1 再此排除这些不支持的代理域名
-            if (IPAddress.IsLoopback(e.ClientRemoteEndPoint.Address))
-            {
-                var ip = (await DnsAnalysis.AnalysisDomainIpByAliDns(e.HttpClient.Request.Host))?.First();
-                if (ip == null || IPAddress.IsLoopback(ip))
-                {
-                    e.TerminateSession();
-                    Log.Info(TAG, "IsLoopback OnRequest: " + e.HttpClient.Request.RequestUri.AbsoluteUri);
-                }
-                else
-                {
-                    e.HttpClient.UpStreamEndPoint = new IPEndPoint(ip, e.ClientRemoteEndPoint.Port);
-                }
-            }
-            return;
-        }
-
-        private async Task OnResponse(object sender, SessionEventArgs e)
-        {
-#if DEBUG
-            Debug.WriteLine("OnResponse" + e.HttpClient.Request.RequestUri.AbsoluteUri);
-            Log.Info(TAG, "OnResponse" + e.HttpClient.Request.RequestUri.AbsoluteUri);
-#endif
-            if (Scripts is null)
-            {
-                return;
-            }
-            if (IsEnableScript &&
-                e.HttpClient.Request.Method == "GET" &&
-                e.HttpClient.Response.StatusCode == 200 &&
-                e.HttpClient.Response.ContentType?.Contains("text/html", StringComparison.OrdinalIgnoreCase) == true)
-            {
-                if (IsOnlyWorkSteamBrowser)
-                {
-                    var ua = e.HttpClient.Request.Headers.GetHeaders("User-Agent");
-                    if (ua?.FirstOrDefault()?.Value.Contains("Valve Steam") == false)
-                    {
-                        return;
-                    }
-                }
-
-                StringBuilder scriptHtml = new();
-
-                foreach (var script in Scripts)
-                {
-                    if (script.ExcludeDomainNamesArray != null)
-                        foreach (var host in script.ExcludeDomainNamesArray)
-                        {
-                            if (e.HttpClient.Request.RequestUri.AbsoluteUri.IsWildcard(host))
-                                goto next;
-                        }
-
-                    foreach (var host in script.MatchDomainNamesArray)
-                    {
-                        var state = host.IndexOf("/") == 0;
-                        if (state)
-                            state = Regex.IsMatch(e.HttpClient.Request.RequestUri.AbsoluteUri, host[1..], RegexOptions.Compiled);
-                        else
-                            state = e.HttpClient.Request.RequestUri.AbsoluteUri.IsWildcard(host);
-                        if (state)
-                        {
-                            var t = e.HttpClient.Response.Headers.GetFirstHeader("Content-Security-Policy");
-                            if (!string.IsNullOrEmpty(t?.Value))
-                            {
-                                e.HttpClient.Response.Headers.RemoveHeader(t);
-                            }
-
-                            if (script.JsPathUrl == null)
-                                script.JsPathUrl = $"/{Guid.NewGuid()}";
-                            var temp = $"<script type=\"text/javascript\" src=\"https://local.steampp.net{script.JsPathUrl}\"></script>";
-
-                            scriptHtml.AppendLine(temp);
-                        }
-                    }
-                next:;
-                }
-
-                if (scriptHtml.Length > 0)
-                {
-                    var doc = await e.GetResponseBodyAsString();
-                    var index = doc.LastIndexOf("</body>", StringComparison.OrdinalIgnoreCase);
-                    if (index == -1)
-                        index = doc.LastIndexOf("</head>", StringComparison.OrdinalIgnoreCase);
-                    if (index > -1)
-                    {
-                        doc = doc.Insert(index, scriptHtml.ToString());
-                        e.SetResponseBodyString(doc);
-                    }
-                }
-            }
-        }
-
-        // 允许重写默认的证书验证逻辑
-        private static Task OnCertificateValidation(object sender, CertificateValidationEventArgs e)
-        {
-            // 根据证书错误，设置IsValid为真/假
-            //if (e.SslPolicyErrors == System.Net.Security.SslPolicyErrors.None)
-            e.IsValid = true;
-            return Task.CompletedTask;
-        }
-
-        // 允许在相互身份验证期间重写默认客户端证书选择逻辑
-        private static Task OnCertificateSelection(object sender, CertificateSelectionEventArgs e)
-        {
-            // set e.clientCertificate to override
-            return Task.CompletedTask;
-        }
-
-        public void TrustCer()
-        {
-            var filePath = ((IHttpProxyService)this).CerFilePath;
-            IPlatformService.Instance.RunShell($"security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain \"{filePath}\"", true);
-        }
-
-        public bool SetupCertificate()
-        {
-            // 此代理使用的本地信任根证书
-            //proxyServer.CertificateManager.TrustRootCertificate(true);
-            //proxyServer.CertificateManager
-            //    .CreateServerCertificate($"{Assembly.GetCallingAssembly().GetName().Name} Certificate")
-            //    .ContinueWith(c => proxyServer.CertificateManager.RootCertificate = c.Result);
-            var result = proxyServer.CertificateManager.CreateRootCertificate(true);
-            if (!result || proxyServer.CertificateManager.RootCertificate == null)
-            {
-                Log.Error(TAG, AppResources.CreateCertificateFaild);
-                Toast.Show(AppResources.CreateCertificateFaild);
-                return false;
-            }
-
-            var filePath = ((IHttpProxyService)this).CerFilePath;
-
-            proxyServer.CertificateManager.RootCertificate.SaveCerCertificateFile(filePath);
-            try
-            {
-                proxyServer.CertificateManager.TrustRootCertificate();
-            }
-#if DEBUG
-            catch (Exception e)
-            {
-                e.LogAndShowT(TAG, msg: "TrustRootCertificate Error");
-            }
-#else
-            catch { }
-#endif
-            try
-            {
-                proxyServer.CertificateManager.EnsureRootCertificate();
-            }
-
-#if DEBUG
-            catch (Exception e)
-            {
-                e.LogAndShowT(TAG, msg: "EnsureRootCertificate Error");
-            }
-#else
-            catch { }
-#endif
-            if (OperatingSystem2.IsMacOS)
-            {
-                TrustCer();
-            }
-            if (OperatingSystem2.IsLinux && !OperatingSystem2.IsAndroid)
-            {
-                //IPlatformService.Instance.AdminShell($"sudo cp -f \"{filePath}\" \"{Path.Combine(IOPath.AppDataDirectory, $@"{CertificateName}.Certificate.pem")}\"", false);
-                Browser2.Open(UrlConstants.OfficialWebsite_LiunxSetupCer);
-                return true;
-            }
-            return IsCertificateInstalled(proxyServer.CertificateManager.RootCertificate);
-        }
-
-        public bool DeleteCertificate()
-        {
-            if (ProxyRunning)
-                return false;
-            if (proxyServer.CertificateManager.RootCertificate == null)
-                return true;
-            try
-            {
-                //using (var store = new X509Store(StoreName.Root, StoreLocation.CurrentUser))
-                //{
-                //    store.Open(OpenFlags.MaxAllowed);
-                //    var test = store.Certificates.Find(X509FindType.FindByIssuerName, CertificateName, true);
-                //    foreach (var item in test)
-                //    {
-                //        store.Remove(item);
-                //    }
-                //}
-                //proxyServer.CertificateManager.ClearRootCertificate();
-                proxyServer.CertificateManager.RemoveTrustedRootCertificate();
-                if (IsCertificateInstalled(proxyServer.CertificateManager.RootCertificate) == false)
-                {
-                    proxyServer.CertificateManager.RootCertificate = null;
-                    if (File.Exists(proxyServer.CertificateManager.PfxFilePath))
-                        File.Delete(proxyServer.CertificateManager.PfxFilePath);
-                }
-                //proxyServer.CertificateManager.RemoveTrustedRootCertificateAsAdmin();
-                //proxyServer.CertificateManager.CertificateStorage.Clear();
-            }
-            catch (CryptographicException)
-            {
-                //取消删除证书
-            }
-            catch (Exception)
-            {
-                throw;
-            }
-            return true;
-        }
+        #region 端口
 
         public int GetRandomUnusedPort() => SocketHelper.GetRandomUnusedPort(ProxyIp);
 
         public bool PortInUse(int port) => SocketHelper.IsUsePort(ProxyIp, port);
 
+        #endregion
+
+        #region 生命周期
+
         public async Task<bool> StartProxy()
         {
-            var isCertificateInstalled = IsCertificateInstalled(proxyServer.CertificateManager.RootCertificate);
-            if (!isCertificateInstalled)
+            if (proxyServer.ProxyRunning)
             {
-                DeleteCertificate();
-                var isOk = SetupCertificate();
-                if (!isOk)
-                {
-                    return false;
-                }
+                Log.Info(TAG, "StartProxy 被重复调用，忽略。");
+                return true;
             }
 
-            #region 启动代理
-            proxyServer.BeforeRequest += OnRequest;
-            proxyServer.BeforeResponse += OnResponse;
-            proxyServer.ServerCertificateValidationCallback += OnCertificateValidation;
-            //proxyServer.ClientCertificateSelectionCallback += OnCertificateSelection;
+            if (!certificateManager.EnsureTrustedRootCertificate())
+            {
+                // 拿不到受信任的根证书就无法解密 HTTPS，继续启动只会得到一个
+                // 「看起来在跑但什么也加速不了」的代理，因此直接失败返回
+                return false;
+            }
 
             try
             {
-                if (PortInUse(ProxyPort)) ProxyPort = GetRandomUnusedPort();
-                var explicitProxyEndPoint = new ExplicitProxyEndPoint(ProxyIp, ProxyPort, true)
+                await BuildRuntimeSettingsAsync().ConfigureAwait(false);
+
+                proxyServer.BeforeRequest += requestInterceptor.OnRequest;
+                proxyServer.BeforeResponse += scriptInjector.OnResponse;
+                proxyServer.ServerCertificateValidationCallback += OnCertificateValidation;
+
+                if (!ConfigureEndPoints())
                 {
-                    // 通过不启用为每个http的域创建证书来优化性能
-                    //GenericCertificate = proxyServer.CertificateManager.RootCertificate
-                };
-                explicitProxyEndPoint.BeforeTunnelConnectRequest += ExplicitProxyEndPoint_BeforeTunnelConnectRequest;
-
-                if (IsSystemProxy)
-                {
-                    //explicit endpoint 是客户端知道代理存在的地方
-                    proxyServer.AddEndPoint(explicitProxyEndPoint);
-                }
-                else
-                {
-                    //if (PortInUse(443))
-                    //{
-                    //    return false;
-                    //}
-
-                    TransparentProxyEndPoint transparentProxyEndPoint;
-                    if (OperatingSystem2.IsLinux && !platformService.IsAdministrator)
-                    {
-                        var freeport = GetRandomUnusedPort();
-                        transparentProxyEndPoint = new TransparentProxyEndPoint(ProxyIp, freeport, true)
-                        {
-                            // 通过不启用为每个http的域创建证书来优化性能
-                            //GenericCertificate = proxyServer.CertificateManager.RootCertificate
-                        };
-
-                        Browser2.Open(string.Format(UrlConstants.OfficialWebsite_UnixHostAccess_, freeport));
-                    }
-                    else
-                    {
-                        transparentProxyEndPoint = new TransparentProxyEndPoint(ProxyIp, 443, true)
-                        {
-                            // 通过不启用为每个http的域创建证书来优化性能
-                            //GenericCertificate = proxyServer.CertificateManager.RootCertificate
-                        };
-                    }
-
-                    //transparentProxyEndPoint.BeforeSslAuthenticate += TransparentProxyEndPoint_BeforeSslAuthenticate;
-                    proxyServer.AddEndPoint(transparentProxyEndPoint);
-
-                    try
-                    {
-                        if (!OperatingSystem2.IsLinux && PortInUse(80) == false)
-                            proxyServer.AddEndPoint(new TransparentProxyEndPoint(ProxyIp, 80, false));
-                    }
-                    catch { }
+                    CleanupHandlers();
+                    return false;
                 }
 
-                if (Socks5ProxyEnable)
-                {
-                    proxyServer.AddEndPoint(new SocksProxyEndPoint(ProxyIp, Socks5ProxyPortId, true));
-                }
-
-                if (TwoLevelAgentEnable && TwoLevelAgentIp != null)
-                {
-                    proxyServer.UpStreamHttpsProxy = new ExternalProxy(TwoLevelAgentIp, TwoLevelAgentPortId)
-                    {
-                        ProxyDnsRequests = true,
-                        BypassLocalhost = true,
-                        ProxyType = TwoLevelAgentProxyType,
-                        UserName = TwoLevelAgentUserName,
-                        Password = TwoLevelAgentPassword,
-                    };
-                    proxyServer.ForwardToUpstreamGateway = true;
-                }
-
-                IsIpv6Support = await DnsAnalysis.GetIsIpv6Support();
+                ConfigureUpStreamProxy();
 
                 proxyServer.Start();
 
-                if (IsSystemProxy)
+                if (IsSystemProxy && !ApplySystemProxy())
                 {
-                    if (!DesktopBridge.IsRunningAsUwp && OperatingSystem2.IsWindows)
-                    {
-                        proxyServer.SetAsSystemProxy(explicitProxyEndPoint, ProxyProtocolType.AllHttp);
-                    }
-                    else
-                    {
-                        if (!IPlatformService.Instance.SetAsSystemProxy(true, explicitProxyEndPoint.IpAddress, explicitProxyEndPoint.Port))
-                        {
-                            Log.Error(TAG, "系统代理开启失败");
-                            return false;
-                        }
-                    }
+                    Log.Error(TAG, "系统代理开启失败");
+                    StopProxy();
+                    return false;
                 }
-                if (IsProxyGOG) { WirtePemCertificateToGoGSteamPlugins(); }
+
+                Log.Info(TAG, $"代理已启动，监听 {string.Join(", ", activeEndPoints.Select(x => $"{x.IpAddress}:{x.Port}"))}");
+                return true;
             }
             catch (Exception ex)
             {
                 Log.Error(TAG, ex, nameof(StartProxy));
+                StopProxy();
                 return false;
             }
-
-            #endregion
-#if DEBUG
-            foreach (var endPoint in proxyServer.ProxyEndPoints)
-                Debug.WriteLine("Listening on '{0}' endpoint at Ip {1} and port: {2} ",
-                    endPoint.GetType().Name, endPoint.IpAddress, endPoint.Port);
-#endif
-            return true;
-        }
-
-        private Task TransparentProxyEndPoint_BeforeSslAuthenticate(object sender, BeforeSslAuthenticateEventArgs e)
-        {
-            e.DecryptSsl = false;
-            if (e.SniHostName.Contains(LocalDomain, StringComparison.OrdinalIgnoreCase))
-            {
-                e.DecryptSsl = true;
-                return Task.CompletedTask;
-            }
-            if (ProxyDomains is null)
-            {
-                return Task.CompletedTask;
-            }
-            foreach (var item in ProxyDomains)
-            {
-                foreach (var host in item.DomainNamesArray)
-                {
-                    if (Uri.TryCreate(host, UriKind.RelativeOrAbsolute, out var u))
-                    {
-                        string h;
-                        if (u.IsAbsoluteUri)
-                            h = u.Host;
-                        else
-                            h = u.OriginalString;
-
-                        if (e.SniHostName.Contains(h, StringComparison.OrdinalIgnoreCase))
-                        {
-                            e.ForwardHttpsHostName = item.ServerName;
-                            e.ForwardHttpsPort = item.PortId;
-                            e.DecryptSsl = true;
-                            return Task.CompletedTask;
-                        }
-                    }
-                }
-            }
-            //var ip = Dns.GetHostAddresses(e.SniHostName).FirstOrDefault();
-            //if (IPAddress.IsLoopback(ip))
-            //{
-            //    e.TerminateSession();
-            //    return Task.CompletedTask;
-            //}
-            return Task.CompletedTask;
-        }
-
-        private async Task ExplicitProxyEndPoint_BeforeTunnelConnectRequest(object sender, TunnelConnectSessionEventArgs e)
-        {
-            e.DecryptSsl = false;
-            if (ProxyDomains is null || e.HttpClient?.Request?.Host == null)
-            {
-                return;
-            }
-            if (e.HttpClient.Request.Host.Contains(LocalDomain, StringComparison.OrdinalIgnoreCase))
-            {
-                e.DecryptSsl = true;
-                return;
-            }
-            foreach (var item in ProxyDomains)
-            {
-                foreach (var host in item.DomainNamesArray)
-                {
-                    if (e.HttpClient.Request.Url.Contains(host, StringComparison.OrdinalIgnoreCase))
-                    {
-                        e.DecryptSsl = true;
-                        if (item.ProxyType == ProxyType.Local ||
-                            item.ProxyType == ProxyType.ServerAccelerate)
-                        {
-                            var addres = item.ForwardDomainIsNameOrIP ? item.ForwardDomainName : item.ForwardDomainIP;
-                            var ip = await GetReverseProxyIp(addres, ProxyDNS, item.ForwardDomainIsNameOrIP);
-                            if (ip != null && !IPAddress.IsLoopback(ip) && !ip.Equals(IPAddress.Any))
-                            {
-                                e.HttpClient.UpStreamEndPoint = new IPEndPoint(ip, item.PortId);
-                            }
-                        }
-                        return;
-                    }
-                }
-            }
-            //var ip = Dns.GetHostAddresses(e.HttpClient.Request.Host).FirstOrDefault();
-            //if (IPAddress.IsLoopback(ip))
-            //{
-            //    e.TerminateSession();
-            //    return Task.CompletedTask;
-            //}
-            return;
         }
 
         public void StopProxy()
@@ -720,106 +226,371 @@ namespace System.Application.Services.Implementation
             {
                 if (proxyServer.ProxyRunning)
                 {
-                    proxyServer.BeforeRequest -= OnRequest;
-                    proxyServer.BeforeResponse -= OnResponse;
-                    proxyServer.ServerCertificateValidationCallback -= OnCertificateValidation;
-                    proxyServer.ClientCertificateSelectionCallback -= OnCertificateSelection;
                     proxyServer.Stop();
                 }
 
+                CleanupHandlers();
+
                 if (IsSystemProxy)
                 {
-                    if (DesktopBridge.IsRunningAsUwp || !OperatingSystem2.IsWindows)
-                    {
-                        IPlatformService.Instance.SetAsSystemProxy(false);
-                    }
-                    else
-                    {
-                        proxyServer.DisableAllSystemProxies();
-                    }
+                    RestoreSystemProxy();
                 }
+
+                // 释放快照，避免已停用配置继续被请求路径持有
+                runtimeSettings = ProxyRuntimeSettings.Disabled;
+
+                Log.Info(TAG, "代理已停止。");
             }
             catch (Exception ex)
             {
-                ex.LogAndShowT(TAG);
+                // 停止过程不应抛出：调用方通常在退出路径上执行它
+                Log.Error(TAG, ex, nameof(StopProxy));
             }
         }
 
-        public bool WirtePemCertificateToGoGSteamPlugins()
+        /// <summary>解绑事件处理器并释放端点引用，修复反复启停导致的处理器累积。</summary>
+        void CleanupHandlers()
         {
-            var local = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            var gogPlugins = Path.Combine(local, "GOG.com", "Galaxy", "plugins", "installed");
-            if (Directory.Exists(gogPlugins))
+            proxyServer.BeforeRequest -= requestInterceptor.OnRequest;
+            proxyServer.BeforeResponse -= scriptInjector.OnResponse;
+            proxyServer.ServerCertificateValidationCallback -= OnCertificateValidation;
+
+            if (explicitProxyEndPoint != null)
             {
-                foreach (var dir in Directory.GetDirectories(gogPlugins))
+                explicitProxyEndPoint.BeforeTunnelConnectRequest -= OnBeforeTunnelConnect;
+                explicitProxyEndPoint = null;
+            }
+
+            foreach (var endPoint in activeEndPoints)
+            {
+                if (endPoint is TransparentProxyEndPoint transparent)
                 {
-                    if (dir.Contains("steam"))
+                    transparent.BeforeSslAuthenticate -= OnBeforeSslAuthenticate;
+                }
+            }
+
+            activeEndPoints.Clear();
+            proxyServer.ProxyEndPoints.Clear();
+        }
+
+        bool ConfigureEndPoints()
+        {
+            if (IsSystemProxy)
+            {
+                if (PortInUse(ProxyPort))
+                {
+                    ProxyPort = GetRandomUnusedPort();
+                }
+
+                explicitProxyEndPoint = new ExplicitProxyEndPoint(ProxyIp, ProxyPort, true);
+                explicitProxyEndPoint.BeforeTunnelConnectRequest += OnBeforeTunnelConnect;
+                AddEndPoint(explicitProxyEndPoint);
+            }
+            else
+            {
+                // 透明代理：接管 443（必要时再加 80）
+                int httpsPort;
+                if (OperatingSystem2.IsLinux && !platformService.IsAdministrator)
+                {
+                    // 非 root 无法绑定 443，退回随机端口并引导用户做端口转发
+                    httpsPort = GetRandomUnusedPort();
+                    Browser2.Open(string.Format(UrlConstants.OfficialWebsite_UnixHostAccess_, httpsPort));
+                }
+                else
+                {
+                    httpsPort = 443;
+                }
+
+                var https = new TransparentProxyEndPoint(ProxyIp, httpsPort, true);
+                https.BeforeSslAuthenticate += OnBeforeSslAuthenticate;
+                AddEndPoint(https);
+
+                if (!OperatingSystem2.IsLinux && !PortInUse(80))
+                {
+                    try
                     {
-                        var pem = proxyServer.CertificateManager.RootCertificate!.
-                            GetPublicPemCertificateString();
-                        var certifi = Path.Combine(local, dir, "certifi", "cacert.pem");
-                        if (File.Exists(certifi))
-                        {
-                            var file = File.ReadAllText(certifi);
-                            var s = file.Substring(Constants.CERTIFICATE_TAG, Constants.CERTIFICATE_TAG, true);
-                            if (string.IsNullOrEmpty(s))
-                            {
-                                File.AppendAllText(certifi, Environment.NewLine + pem);
-                            }
-                            else if (s.Trim() != pem.Trim())
-                            {
-                                var index = file.IndexOf(Constants.CERTIFICATE_TAG);
-                                File.WriteAllText(certifi, file.Remove(index, s.Length) + pem);
-                            }
-                            return true;
-                        }
+                        AddEndPoint(new TransparentProxyEndPoint(ProxyIp, 80, false));
+                    }
+                    catch (SocketException ex)
+                    {
+                        // 80 端口被占用不影响 HTTPS 加速，降级继续
+                        Log.Info(TAG, "无法监听 80 端口，已跳过：" + ex.Message);
                     }
                 }
             }
-            return false;
+
+            if (Socks5ProxyEnable)
+            {
+                AddEndPoint(new SocksProxyEndPoint(ProxyIp, Socks5ProxyPortId, true));
+            }
+
+            return activeEndPoints.Count > 0;
         }
 
-        public bool IsCertificateInstalled(X509Certificate2? certificate2)
+        void AddEndPoint(ProxyEndPoint endPoint)
         {
-            if (certificate2 == null)
-                return false;
-            if (certificate2.NotAfter <= DateTime.Now)
-                return false;
+            proxyServer.AddEndPoint(endPoint);
+            activeEndPoints.Add(endPoint);
+        }
 
-            if (OperatingSystem2.IsLinux)
+        void ConfigureUpStreamProxy()
+        {
+            if (!TwoLevelAgentEnable || string.IsNullOrWhiteSpace(TwoLevelAgentIp)) return;
+
+            proxyServer.UpStreamHttpsProxy = new ExternalProxy(TwoLevelAgentIp, TwoLevelAgentPortId)
             {
+                ProxyDnsRequests = true,
+                BypassLocalhost = true,
+                ProxyType = TwoLevelAgentProxyType,
+                UserName = TwoLevelAgentUserName,
+                Password = TwoLevelAgentPassword,
+            };
+            proxyServer.ForwardToUpstreamGateway = true;
+        }
+
+        bool ApplySystemProxy()
+        {
+            if (!DesktopBridge.IsRunningAsUwp && OperatingSystem2.IsWindows)
+            {
+                if (explicitProxyEndPoint == null) return false;
+                proxyServer.SetAsSystemProxy(explicitProxyEndPoint, ProxyProtocolType.AllHttp);
                 return true;
             }
-            using var store = new X509Store(OperatingSystem2.IsMacOS ? StoreName.My : StoreName.Root, StoreLocation.CurrentUser);
-            store.Open(OpenFlags.ReadOnly);
-            return store.Certificates.Contains(certificate2);
+
+            return explicitProxyEndPoint != null
+                && IPlatformService.Instance.SetAsSystemProxy(true, explicitProxyEndPoint.IpAddress, explicitProxyEndPoint.Port);
         }
 
-        void Dispose(bool disposing)
+        void RestoreSystemProxy()
         {
-            if (!disposedValue)
+            if (DesktopBridge.IsRunningAsUwp || !OperatingSystem2.IsWindows)
             {
-                if (disposing)
-                {
-                    // TODO: 释放托管状态(托管对象)
-                    if (proxyServer.ProxyRunning)
-                    {
-                        StopProxy();
-                    }
-                    proxyServer.Dispose();
-                }
-
-                // TODO: 释放未托管的资源(未托管的对象)并重写终结器
-                // TODO: 将大型字段设置为 null
-                disposedValue = true;
+                IPlatformService.Instance.SetAsSystemProxy(false);
+            }
+            else
+            {
+                proxyServer.DisableAllSystemProxies();
             }
         }
+
+        #endregion
+
+        #region 运行期设置快照
+
+        /// <summary>
+        /// 把当前可变配置固化为不可变快照。这是本类唯一的「配置 → 运行期」转换点。
+        /// </summary>
+        async Task BuildRuntimeSettingsAsync()
+        {
+            var matcher = ProxyHostMatcher.Build(ProxyDomains);
+            var scripts = BuildScriptRules();
+            var ipv6Support = await dnsAnalysis.GetIsIpv6Support().ConfigureAwait(false);
+
+            runtimeSettings = new ProxyRuntimeSettings(
+                matcher,
+                scripts,
+                ProxyDNS,
+                ipv6Support,
+                TwoLevelAgentEnable,
+                OnlyEnableProxyScript,
+                IsEnableScript,
+                IsOnlyWorkSteamBrowser);
+
+            Log.Info(TAG,
+                $"运行期设置已构建：加速项目 {ProxyDomains?.Count ?? 0} 个，匹配规则 {matcher.RuleCount} 条，脚本 {scripts.Count} 个，IPv6={ipv6Support}");
+        }
+
+        /// <summary>
+        /// 预处理脚本规则：预编译正则、区分精确/通配/排除规则，并一次性分配 <c>JsPathUrl</c>。
+        /// </summary>
+        List<ScriptRule> BuildScriptRules()
+        {
+            var result = new List<ScriptRule>();
+            var scripts = Scripts;
+            if (scripts == null || scripts.Count == 0) return result;
+
+            foreach (var script in scripts)
+            {
+                if (script == null || !script.Enable) continue;
+
+                // 修复点：原来在响应线程上「首次访问就赋值」，两个并发响应可能看到不同 URL，
+                // 导致注入的 <script src> 指向一个查不到的路径而 404。
+                script.JsPathUrl ??= "/" + Guid.NewGuid().ToString("N");
+
+                var regex = default(Regex);
+                var exact = new List<string>();
+                var wildcard = new List<string>();
+
+                foreach (var host in script.MatchDomainNamesArray)
+                {
+                    if (string.IsNullOrWhiteSpace(host)) continue;
+
+                    if (host[0] == '/')
+                    {
+                        // 以 / 开头视为正则；只编译一次
+                        try
+                        {
+                            regex = new Regex(host[1..], RegexOptions.Compiled);
+                        }
+                        catch (ArgumentException ex)
+                        {
+                            Log.Error(TAG, ex, $"脚本 {script.Name} 的匹配正则无效：{host}");
+                        }
+                    }
+                    else if (host.Contains('*'))
+                    {
+                        wildcard.Add(host);
+                    }
+                    else
+                    {
+                        exact.Add(host);
+                    }
+                }
+
+                var exclude = script.ExcludeDomainNamesArray ?? Array.Empty<string>();
+
+                result.Add(new ScriptRule(script, exact.ToArray(), wildcard.ToArray(), regex, exclude));
+            }
+
+            return result;
+        }
+
+        #endregion
+
+        #region DNS
+
+        /// <summary>
+        /// 解析加速项目的上游地址（域名 → 首选 IP）。
+        /// </summary>
+        Task<IPAddress?> ResolveUpstreamAsync(string host, IPAddress? dnsServer, bool isDomain)
+        {
+            if (!isDomain && IPAddress.TryParse(host, out var literal))
+            {
+                // 已经是 IP 字面量，无需解析
+                return Task.FromResult<IPAddress?>(literal);
+            }
+
+            return ResolveViaCacheAsync(host, dnsServer, isDomain);
+        }
+
+        async Task<IPAddress?> ResolveViaCacheAsync(string host, IPAddress? dnsServer, bool isDomain)
+        {
+            var settings = runtimeSettings;
+            var addresses = await dnsCache
+                .GetOrAddAsync(host, settings.IsIpv6Support, dnsServer)
+                .ConfigureAwait(false);
+
+            return addresses?.FirstOrDefault();
+        }
+
+        /// <summary>真实解析逻辑（由 <see cref="ProxyDnsCache"/> 调用，已做 TTL 与并发合并）。</summary>
+        Task<IPAddress[]?> ResolveCoreAsync(
+            string host, bool ipv6, IPAddress? dnsServer, CancellationToken cancellationToken)
+        {
+            if (dnsServer != null)
+            {
+                return dnsAnalysis.AnalysisDomainIpByCustomDns(host, new[] { dnsServer }, ipv6, cancellationToken);
+            }
+
+            if (!OperatingSystem2.IsWindows && !IsSystemProxy)
+            {
+                // 非 Windows 的 hosts 加速模式下不能用系统默认 DNS：
+                // 否则会解析到我们自己写入 hosts 的 127.0.0.1，形成无限回环
+                return dnsAnalysis.AnalysisDomainIpByAliDns(host, ipv6, cancellationToken);
+            }
+
+            return dnsAnalysis.AnalysisDomainIp(host, ipv6, cancellationToken);
+        }
+
+        #endregion
+
+        #region 代理事件
+
+        /// <summary>
+        /// 透明代理模式：决定哪些 SNI 需要解密以便改写。
+        /// </summary>
+        Task OnBeforeSslAuthenticate(object sender, BeforeSslAuthenticateEventArgs e)
+        {
+            e.DecryptSsl = false;
+
+            if (e.SniHostName.Contains(IHttpProxyService.LocalDomain, StringComparison.OrdinalIgnoreCase))
+            {
+                e.DecryptSsl = true;
+                return Task.CompletedTask;
+            }
+
+            if (runtimeSettings.HostMatcher.TryMatch(e.SniHostName, null, out var project))
+            {
+                e.ForwardHttpsHostName = project.ServerName;
+                e.ForwardHttpsPort = project.PortId;
+                e.DecryptSsl = true;
+            }
+
+            return Task.CompletedTask;
+        }
+
+        /// <summary>显式代理模式的 CONNECT 隧道：决定是否解密并指定上游。</summary>
+        async Task OnBeforeTunnelConnect(object sender, TunnelConnectSessionEventArgs e)
+        {
+            e.DecryptSsl = false;
+
+            var settings = runtimeSettings;
+            var request = e.HttpClient?.Request;
+            if (request?.Host == null) return;
+
+            if (request.Host.Contains(IHttpProxyService.LocalDomain, StringComparison.OrdinalIgnoreCase))
+            {
+                e.DecryptSsl = true;
+                return;
+            }
+
+            if (!settings.ShouldAccelerate) return;
+
+            if (!settings.HostMatcher.TryMatch(request.Host, request.Url, out var project))
+            {
+                return;
+            }
+
+            e.DecryptSsl = true;
+
+            if (project.ProxyType != ProxyType.Local && project.ProxyType != ProxyType.ServerAccelerate)
+            {
+                return;
+            }
+
+            var address = project.ForwardDomainIsNameOrIP ? project.ForwardDomainName : project.ForwardDomainIP;
+            var ip = await ResolveUpstreamAsync(address, settings.ProxyDns, project.ForwardDomainIsNameOrIP)
+                .ConfigureAwait(false);
+
+            if (ip != null && !IPAddress.IsLoopback(ip) && !ip.Equals(IPAddress.Any))
+            {
+                e.HttpClient.UpStreamEndPoint = new IPEndPoint(ip, project.PortId);
+            }
+        }
+
+        /// <summary>
+        /// 上游证书一律接受。
+        /// <para>
+        /// 注意：这会放宽上游 TLS 校验，是本工具为兼容自建/镜像节点而做的既有取舍，
+        /// 不是本次重构引入的；改动它会破坏部分加速节点的可用性。
+        /// </para>
+        /// </summary>
+        static Task OnCertificateValidation(object sender, CertificateValidationEventArgs e)
+        {
+            e.IsValid = true;
+            return Task.CompletedTask;
+        }
+
+        #endregion
 
         public void Dispose()
         {
-            // 不要更改此代码。请将清理代码放入“Dispose(bool disposing)”方法中
-            Dispose(disposing: true);
-            GC.SuppressFinalize(this);
+            if (disposed) return;
+            disposed = true;
+
+            StopProxy();
+            dnsCache.Dispose();
+            proxyServer.Dispose();
         }
     }
 }

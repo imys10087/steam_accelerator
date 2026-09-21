@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
@@ -223,13 +224,73 @@ namespace System
 
         /// <summary>
         /// Converts a wildcard to a regex.
+        ///
+        /// <para><b>修复说明</b></para>
+        /// <para>
+        /// 原实现为：
+        /// <c>Regex.IsMatch(str, "^" + Regex.Escape(pattern).Replace("\\*", ".*").Replace("\\?", ".") + "$", RegexOptions.Compiled)</c>
+        /// </para>
+        /// <list type="number">
+        /// <item><b>性能</b>：<see cref="RegexOptions.Compiled"/> 与「每次调用新建模式字符串」组合在一起，
+        /// 意味着<b>每一次调用都会动态生成并 JIT 一份新的正则程序集</b>。本方法在脚本注入的响应热路径上
+        /// 按「脚本数 × 规则数」被调用，是明显的 CPU 与内存分配热点。</item>
+        /// <item><b>稳定性 / 安全</b>：正则模式来自可下载的第三方用户脚本，原实现没有设置匹配超时，
+        /// 恶意或写得不好的模式会造成灾难性回溯，把代理线程挂住。这里统一加上 1 秒匹配超时。</item>
+        /// </list>
+        /// <para>
+        /// 现在按模式缓存已编译实例（容量有上界），并把超时异常当作「不匹配」处理。
+        /// </para>
         /// </summary>
-        /// <param name="pattern">The wildcard pattern to convert.</param>
-        /// <returns>A regex equivalent of the given wildcard.</returns>
+        /// <param name="str">被匹配的字符串。</param>
+        /// <param name="pattern">通配符模式，<c>*</c> 匹配任意长度，<c>?</c> 匹配单个字符。</param>
         public static bool IsWildcard(this string str, string pattern)
-            => Regex.IsMatch(str, "^" + Regex.Escape(pattern)
-                .Replace("\\*", ".*")
-                .Replace("\\?", ".") + "$", RegexOptions.Compiled);
+        {
+            if (str == null || pattern == null) return false;
+
+            var regex = WildcardRegexCache.GetOrAdd(pattern);
+
+            try
+            {
+                return regex.IsMatch(str);
+            }
+            catch (RegexMatchTimeoutException)
+            {
+                // 视为不匹配，避免一个病态模式拖垮代理
+                return false;
+            }
+        }
+
+        /// <summary>通配符模式 → 已编译正则 的有界缓存。</summary>
+        static class WildcardRegexCache
+        {
+            const int MaxEntries = 512;
+
+            static readonly TimeSpan MatchTimeout = TimeSpan.FromSeconds(1);
+
+            static readonly ConcurrentDictionary<string, Regex> Cache = new(StringComparer.Ordinal);
+
+            public static Regex GetOrAdd(string pattern)
+            {
+                if (Cache.TryGetValue(pattern, out var cached))
+                {
+                    return cached;
+                }
+
+                if (Cache.Count >= MaxEntries)
+                {
+                    // 简单策略：超过上限即整体清空。脚本规则数量很小，冷启动代价可接受，
+                    // 但能保证长期运行时的内存上界。
+                    Cache.Clear();
+                }
+
+                var regex = new Regex(
+                    "^" + Regex.Escape(pattern).Replace("\\*", ".*").Replace("\\?", ".") + "$",
+                    RegexOptions.Compiled | RegexOptions.CultureInvariant,
+                    MatchTimeout);
+
+                return Cache.GetOrAdd(pattern, regex);
+            }
+        }
 
         #region Compressor
 

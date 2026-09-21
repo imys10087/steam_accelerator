@@ -1,60 +1,34 @@
-using System.Application.Columns;
-using System.Application.Models;
 using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Security.Cryptography;
 using System.Threading.Tasks;
 
 namespace System.Application.Services.CloudService
 {
+    /// <summary>
+    /// 平台侧为 <see cref="IApiConnection"/> 提供的能力。
+    ///
+    /// <para><b>裁剪说明</b></para>
+    /// <para>
+    /// 原接口还包含账号体系相关能力：<c>Auth</c>、<c>SaveAuthTokenAsync</c>、
+    /// <c>OnLoginedAsync</c>、<c>GetAuthenticationHeaderValue</c>、<c>RSA</c>、
+    /// <c>RefreshToken</c>。加速功能所用的服务端接口
+    /// （<c>api/Accelerate/All</c>、<c>api/Accelerate/Scripts</c>、<c>api/Script/*</c>、
+    /// <c>api/Version/*</c>）全部是匿名接口，不需要 JWT 与 RSA 加密，
+    /// 因此这些成员已随账号模块一并移除。
+    /// </para>
+    /// </summary>
     public interface IApiConnectionPlatformHelper
     {
-        #region Authentication
-
-        IAuthHelper Auth { get; }
-
-        /// <summary>
-        /// 保存用户登录凭证
-        /// </summary>
-        /// <param name="authToken"></param>
-        Task SaveAuthTokenAsync(JWTEntity authToken);
-
-        /// <summary>
-        /// 当登录完成时
-        /// </summary>
-        /// <param name="phoneNumber"></param>
-        /// <param name="response"></param>
-        Task OnLoginedAsync(IReadOnlyPhoneNumber? phoneNumber, ILoginResponse response);
-
-        AuthenticationHeaderValue? GetAuthenticationHeaderValue(JWTEntity? authToken)
-        {
-            if (authToken.HasValue())
-            {
-                var authHeaderValue = new AuthenticationHeaderValue(Constants.Basic, authToken?.AccessToken);
-                return authHeaderValue;
-            }
-            return null;
-        }
-
-        #endregion
-
-        /// <summary>
-        /// 显示响应错误消息
-        /// </summary>
-        /// <param name="message"></param>
+        /// <summary>显示响应错误消息。</summary>
         void ShowResponseErrorMessage(string message);
 
+        /// <summary>显示响应错误消息（默认实现会在「已取消」时静默）。</summary>
         void ShowResponseErrorMessage(IApiResponse response, string? errorAppendText = null)
         {
             if (response.Code == ApiResponseCode.Canceled) return;
-            var message = response.GetMessageByAppendText(errorAppendText);
-            ShowResponseErrorMessage(message);
+            ShowResponseErrorMessage(response.GetMessageByAppendText(errorAppendText));
         }
 
+        /// <summary>创建用于访问服务端接口的 <see cref="HttpClient"/>。</summary>
         HttpClient CreateClient();
-
-        RSA RSA { get; }
-
-        Task<IApiResponse<JWTEntity>> RefreshToken(JWTEntity jwt);
     }
 }

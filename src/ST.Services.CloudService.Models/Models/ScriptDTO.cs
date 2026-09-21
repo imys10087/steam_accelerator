@@ -106,10 +106,18 @@ namespace System.Application.Models
         [S_JsonIgnore]
         public string CachePath { get; set; } = string.Empty;
 
+        /// <summary>
+        /// 脚本文件名（不含目录）。
+        /// <para>
+        /// 修复点：原实现为 <c>FilePath ?? Path.GetFileName(FilePath)</c>，
+        /// 而 <see cref="FilePath"/> 是非空属性（默认 <see cref="string.Empty"/>），
+        /// 因此 <c>??</c> 右侧是永不执行的死代码，等于直接把完整路径当作文件名返回。
+        /// </para>
+        /// </summary>
         [MPIgnore]
         [N_JsonIgnore]
         [S_JsonIgnore]
-        public string FileName => FilePath ?? Path.GetFileName(FilePath);
+        public string FileName => Path.GetFileName(FilePath);
 
         [MPIgnore]
         [N_JsonIgnore]

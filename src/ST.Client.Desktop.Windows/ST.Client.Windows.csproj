@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFrameworks>net6.0-windows10.0.19041.0</TargetFrameworks>
@@ -39,7 +39,6 @@
 
   <ItemGroup>
     <PackageReference Include="DnsClient" />
-    <PackageReference Include="Gameloop.Vdf" />
     <PackageReference Include="Aigio.Avalonia.AppCenter" />
     <PackageReference Include="Aigio.Avalonia.AppCenter.Analytics" />
     <PackageReference Include="Aigio.Avalonia.AppCenter.Crashes" />

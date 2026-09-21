@@ -1,58 +1,38 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System.Application.Columns;
 using System.Application.Models;
 using System.Application.Services.CloudService;
 using System.Net.Http;
-using System.Threading.Tasks;
 
 namespace System.Application.Services.Implementation
 {
+    /// <summary>
+    /// 桌面端服务端接口客户端。
+    ///
+    /// <para><b>裁剪说明</b></para>
+    /// <para>
+    /// 原实现注入 <c>IUserManager</c> 并重写 <c>SaveAuthTokenAsync</c> /
+    /// <c>OnLoginedAsync</c> 来把 JWT 与用户资料写回本地用户存储。
+    /// 账号模块移除后本类不再持有任何用户状态，仅是一个纯粹的匿名接口客户端。
+    /// </para>
+    /// </summary>
     public class CloudServiceClient : CloudServiceClientBase
     {
-        protected readonly IUserManager userManager;
-
         public CloudServiceClient(
             ILoggerFactory loggerFactory,
             IHttpClientFactory clientFactory,
             IHttpPlatformHelperService httpPlatformHelper,
-            IUserManager userManager,
             IToast toast,
             IOptions<AppSettings> options,
-            IModelValidator validator) : base(
+            IModelValidator validator)
+            : base(
                 loggerFactory.CreateLogger(ClientName_),
                 clientFactory,
                 httpPlatformHelper,
                 toast,
-                userManager,
                 options.Value,
                 validator)
         {
-            this.userManager = userManager;
-        }
-
-        public override async Task SaveAuthTokenAsync(JWTEntity authToken)
-        {
-            var user = await userManager.GetCurrentUserAsync();
-            if (user != null)
-            {
-                user.AuthToken = authToken;
-                await userManager.SetCurrentUserAsync(user);
-            }
-        }
-
-        public override async Task OnLoginedAsync(IReadOnlyPhoneNumber? phoneNumber, ILoginResponse response)
-        {
-            await userManager.SetCurrentUserInfoAsync(response.User, true);
-
-            var cUser = new CurrentUser
-            {
-                UserId = response.UserId,
-                AuthToken = response.AuthToken,
-                PhoneNumber = phoneNumber?.PhoneNumber ?? string.Empty,
-            };
-
-            await userManager.SetCurrentUserAsync(cUser);
         }
     }
 }

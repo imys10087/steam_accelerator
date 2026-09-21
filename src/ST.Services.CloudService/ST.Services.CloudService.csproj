@@ -23,7 +23,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ST.Services.CloudService.ViewModels\ST.Services.CloudService.ViewModels.csproj" />
+    <!-- 原实现引用的是 ST.Services.CloudService.ViewModels（同一份源码带 MVVM_VM 再编译一次），
+         该工程已合并进 ST.Services.CloudService.Models。 -->
+    <ProjectReference Include="..\ST.Services.CloudService.Models\ST.Services.CloudService.Models.csproj" />
     <ProjectReference Include="..\ST\ST.csproj" />
   </ItemGroup>
+
 </Project>

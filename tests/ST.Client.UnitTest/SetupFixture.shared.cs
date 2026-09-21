@@ -73,14 +73,9 @@ namespace System.Application
             var options = new AppSettings
             {
                 ApiBaseUrl = "https://localhost:5001",
-                //AppVersion = Guid.ParseExact(DevAppVersion, "N"),
-                RSASecret = DevRSAPublicKey,
             };
             // app 配置项
             services.TryAddOptions(options);
-
-            // 添加安全服务
-            services.AddSecurityService<EmbeddedAesDataProtectionProvider, EmptyLocalDataProtectionProvider>();
 
             // 模型验证框架
             services.TryAddModelValidator();
@@ -89,9 +84,6 @@ namespace System.Application
 
             // 键值对存储
             services.TryAddSecureStorage();
-
-            // 业务平台用户管理
-            services.TryAddUserManager();
 
             services.TryAddClientHttpPlatformHelperService();
 

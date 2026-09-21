@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <!--<TargetFrameworks>net6.0-macos</TargetFrameworks>-->
@@ -43,7 +43,6 @@
 
   <ItemGroup>
     <PackageReference Include="DnsClient" />
-    <PackageReference Include="Gameloop.Vdf" />
   </ItemGroup>
 
   <ItemGroup Condition=" $(TargetFramework.StartsWith('Xamarin.Mac20')) OR $(TargetFramework.Contains('-mac')) ">

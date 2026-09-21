@@ -31,16 +31,10 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
     <!--<PackageReference Include="Nito.Disposables" />-->
     <PackageReference Include="SkiaSharp" />
-    <PackageReference Include="Net.Codecrete.QrCodeGenerator" />
     <PackageReference Include="Portable.BouncyCastle" />
-    <PackageReference Include="Fleck" />
-  </ItemGroup>
-  <ItemGroup Condition=" $(TargetFramework.StartsWith('netstandard')) ">
-    <PackageReference Include="JustArchiNET.Madness" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\references\ArchiSteamFarm\ArchiSteamFarm.Library\ArchiSteamFarm.Library.csproj" />
     <ProjectReference Include="..\..\references\Titanium-Web-Proxy\src\Titanium.Web.Proxy\Titanium.Web.Proxy.csproj" />
     <ProjectReference Include="..\Common.PinyinLib\Common.PinyinLib.csproj" />
     <ProjectReference Include="..\Repositories.sqlite-net-pcl\Repositories.sqlite-net-pcl.csproj" />

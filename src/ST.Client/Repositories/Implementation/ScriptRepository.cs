@@ -1,4 +1,3 @@
-using AutoMapper;
 using System;
 using System.Application.Entities;
 using System.Application.Models;
