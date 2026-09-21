@@ -24,10 +24,23 @@ namespace System.Application.Services.Implementation
     internal sealed class DnsAnalysisServiceImpl : IDnsAnalysisService
     {
         /// <summary>
-        /// 共享查询客户端。DnsClient 默认启用结果缓存，这里保留其默认配置，
+        /// 共享查询客户端。DnsClient 默认启用结果缓存，这里保留其缓存能力，
         /// 上层还会再套一层 <c>ProxyDnsCache</c> 做显式 TTL 与并发合并。
+        ///
+        /// <para><b>为什么显式收紧超时</b></para>
+        /// <para>
+        /// DnsClient 的默认参数是 <c>Timeout=5s</c> + <c>Retries=2</c>，即单次查询最坏要等 15 秒。
+        /// 而本解析会被用在**请求路径**上（未命中加速项目的域名复核、加速项目上游地址解析），
+        /// 一旦某个 DNS 服务器不可达，每个新域名都会把请求拖住十几秒，表现为「网页能开但极卡」。
+        /// 这里收紧为 2 秒 × 1 次重试，最坏约 4 秒，把抖动的上限压下来。
+        /// </para>
         /// </summary>
-        static readonly LookupClient lookupClient = new();
+        static readonly LookupClient lookupClient = new(new LookupClientOptions
+        {
+            Timeout = TimeSpan.FromSeconds(2),
+            Retries = 1,
+            UseCache = true,
+        });
 
         public async Task<IPAddress[]?> AnalysisDomainIpByCustomDns(
             string url,
@@ -39,6 +52,13 @@ namespace System.Application.Services.Implementation
 
             var options = dnsServers != null && dnsServers.Length > 0
                 ? new DnsQueryAndServerOptions(dnsServers)
+                {
+                    // 与上面的 lookupClient 保持一致：自定义 DNS 也要收紧超时，
+                    // 否则一旦用户选中的 DNS 不可达，同样会把请求路径拖慢十几秒
+                    Timeout = TimeSpan.FromSeconds(2),
+                    Retries = 1,
+                    UseCache = true,
+                }
                 : null;
 
             if (isIPv6)
@@ -99,13 +119,20 @@ namespace System.Application.Services.Implementation
                 // 注意：LookupClient 不实现 IDisposable，原写法 `using var` 会编译失败
                 var client = new LookupClient(options);
 
+                // 硬性上限：本机没有 IPv6 出口时，向 IPv6 DNS 地址发包可能在 socket
+                // 层面长时间不返回（实测该探测阻塞了 11.7 秒，直接拖慢代理启动）。
+                // 这里再加一层 2 秒硬超时，超时即判定「不支持 IPv6」——
+                // 该标志只影响「是否额外查询 AAAA 记录」，误判为 false 是安全的。
+                using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                timeoutCts.CancelAfter(TimeSpan.FromSeconds(2));
+
                 var response = await client
                     .QueryServerAsync(
                         new[] { IPAddress.Parse(PrimaryDNS_IPV6_Ali) },
                         IPV6_TESTDOMAIN,
                         QueryType.AAAA,
                         QueryClass.IN,
-                        cancellationToken)
+                        timeoutCts.Token)
                     .ConfigureAwait(false);
 
                 var expected = IPAddress.Parse(IPV6_TESTDOMAIN_SUCCESS);

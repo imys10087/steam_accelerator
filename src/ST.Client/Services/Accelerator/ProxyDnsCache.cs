@@ -100,8 +100,13 @@ namespace System.Application.Services.Accelerator
             int maxEntries = 1024)
         {
             this.resolver = resolver ?? throw new ArgumentNullException(nameof(resolver));
-            this.positiveTtl = positiveTtl ?? TimeSpan.FromSeconds(60);
-            this.negativeTtl = negativeTtl ?? TimeSpan.FromSeconds(5);
+            // 正向 TTL 取 5 分钟：加速项目的上游地址非常稳定，解析一次长期复用即可。
+            // 早期取 60 秒，导致每分钟都要把全部上游域名重新解析一遍，
+            // 而解析发生在请求路径上 —— 网络抖动时会周期性地出现成片卡顿。
+            this.positiveTtl = positiveTtl ?? TimeSpan.FromMinutes(5);
+            // 负向 TTL 取 30 秒：早期取 5 秒会让「解析失败的域名」被反复重查
+            //（每次都可能等到超时），是请求路径上另一处放大效应。
+            this.negativeTtl = negativeTtl ?? TimeSpan.FromSeconds(30);
             this.maxEntries = Math.Max(16, maxEntries);
         }
 
