@@ -286,6 +286,16 @@ Titanium.Web.Proxy 的 `ThreadPoolWorkerThread`、`CertificateManager.SaveFakeCe
 > 属于「机械性收尾」，建议在装好 SDK 后一次性处理。
 > 可用 `python tools/prune/dangling.py .` 随时重新生成这份清单。
 
+**第二轮补修（提交前自动核对报告与代码一致性时发现）**：报告中列为「已修复」的第 4 项
+（`ScriptDTO.FileName`）当时实际尚未落地，已补修；同时顺手修掉了本表中原列为待办的
+`ProxyService.IsProxyGOG`、`ProxySettings.Avalonia.IsProxyGOG`、`SetupFixture.shared.cs`
+三项。至此本表的剩余待办为 **15 项**，全部集中在 UI 视图层与平台服务的「摘除已删模块引用」。
+
+**推送状态**：全部改动已推送到 `imys10087/steam_accelerator` 的新分支
+`refactor/steam-github-accelerator-only`（32 个文件修改、13 个新增、1714 个删除；
+行数 4 574 增 / 207 775 删——删除量主要来自 `source/` 遗留 V1 代码库与移动端工程）。
+远端 `main` 未被改动。
+
 | 文件 | 残留引用 | 处理方式 |
 | --- | --- | --- |
 | `src/ST.Client/UI/ViewModels/MainWindowViewModel.cs` | 7 处：`AddTabItem<SteamAccountPageViewModel>`、`GameListPageViewModel`、`LocalAuthPageViewModel`、`ArchiSteamFarmPlusPageViewModel`、`GameRelatedPageViewModel`、`DebugPageViewModel`；`IUserManager.Instance.OnSignOut` | 仅保留 `CommunityProxyPageViewModel` + `ProxyScriptManagePageViewModel`；删除登出回调 |
@@ -301,11 +311,11 @@ Titanium.Web.Proxy 的 `ThreadPoolWorkerThread`、`CertificateManager.SaveFakeCe
 | `src/ST.Client.Desktop.Avalonia.App/App.axaml.cs` | 3 处：已移除服务的注册 | 删除对应行 |
 | `src/ST.Client/UI/ViewModels/Pages/ProxyScriptManagePageViewModel.cs` | 1 处：脚本商店要求登录（`IUserManager.Instance.GetCurrentUser() == null`） | 直接移除该检查（`api/script/*` 均为匿名接口） |
 | `src/ST.Client/UI/ViewModels/Pages/About/AboutPageViewModel.cs` | 3 处：手机号展示、`IUserManager` | 删除账号相关区块 |
-| `src/ST.Client/Services/Mvvm/ProxyService.cs` | 1 处：`httpProxyService.IsProxyGOG` | 删除（GOG 代理已移除） |
-| `src/ST.Client/Settings/ProxySettings.Avalonia.cs` | `IsProxyGOG` 属性 | 删除 |
+| `src/ST.Client/Services/Mvvm/ProxyService.cs` | 1 处：`httpProxyService.IsProxyGOG` | ✅ 已修复（移除该赋值） |
+| `src/ST.Client/Settings/ProxySettings.Avalonia.cs` | `IsProxyGOG` 属性 | ✅ 已移除 |
 | `src/ST.Client/UI/ViewModels/Pages/About/AboutPageViewModel.Mobile.cs`、`CommunityProxyPageViewModel.Mobile.cs` | 移动端变体 | 删除（移动端已移除） |
 | `src/ST.Client.Desktop.Avalonia/ST.Client.Avalonia.csproj` | 17 处：指向已删除文件的 `<Compile Remove>` / `<AvaloniaXaml Remove>` / `<None Remove>` | 删除这些条目（含 `CefSharp\**` 5 条） |
-| `tests/ST.Client.UnitTest/SetupFixture.shared.cs` | 2 处：`AddSecurityService<EmbeddedAesDataProtectionProvider, EmptyLocalDataProtectionProvider>`、`TryAddUserManager` | 删除这 2 行 |
+| `tests/ST.Client.UnitTest/SetupFixture.shared.cs` | 2 处：`AddSecurityService<EmbeddedAesDataProtectionProvider, EmptyLocalDataProtectionProvider>`、`TryAddUserManager` | ✅ 已修复（连同 `AppSettings.RSASecret` 赋值一并移除） |
 | `src/ST.Client/UI/ResIcon.cs` | `FastLoginChannel.Steam` 映射 | 删除该映射 |
 | `src/ST.Services.CloudService.Models/Models/` 下的账号侧 DTO | `Notice/*`、`Font/*`、`ActiveUser*`、`Login*`、`User*`、`SendSmsRequest`、`ClockInRequest`、`Notice*` 等 | **可选**进一步删除（当前保留不影响编译，仅增加阅读噪音） |
 
